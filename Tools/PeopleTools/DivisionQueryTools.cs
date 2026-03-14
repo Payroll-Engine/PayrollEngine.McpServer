@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -16,9 +17,13 @@ public sealed class DivisionQueryTools(PayrollHttpClient httpClient) : ToolBase(
     public async Task<string> ListDivisionsAsync(
         [Description("The unique tenant identifier")] string tenantIdentifier)
     {
-        var context = await ResolveTenantContextAsync(tenantIdentifier);
-        var divisions = await DivisionService().QueryAsync<Division>(context);
-        return JsonSerializer.Serialize(divisions);
+        try
+        {
+            var context = await ResolveTenantContextAsync(tenantIdentifier);
+            var divisions = await DivisionService().QueryAsync<Division>(context);
+            return JsonSerializer.Serialize(divisions);
+        }
+        catch (Exception ex) { return Error(ex); }
     }
 
     /// <summary>Get a division by name within a tenant</summary>
@@ -27,8 +32,12 @@ public sealed class DivisionQueryTools(PayrollHttpClient httpClient) : ToolBase(
         [Description("The unique tenant identifier")] string tenantIdentifier,
         [Description("The division name")] string divisionName)
     {
-        var (_, division) = await ResolveDivisionAsync(tenantIdentifier, divisionName);
-        return JsonSerializer.Serialize(division);
+        try
+        {
+            var (_, division) = await ResolveDivisionAsync(tenantIdentifier, divisionName);
+            return JsonSerializer.Serialize(division);
+        }
+        catch (Exception ex) { return Error(ex); }
     }
 
     /// <summary>Get a single attribute value of a division</summary>
@@ -38,7 +47,11 @@ public sealed class DivisionQueryTools(PayrollHttpClient httpClient) : ToolBase(
         [Description("The division name")] string divisionName,
         [Description("The attribute name")] string attributeName)
     {
-        var (context, division) = await ResolveDivisionAsync(tenantIdentifier, divisionName);
-        return await DivisionService().GetAttributeAsync(context, division.Id, attributeName);
+        try
+        {
+            var (context, division) = await ResolveDivisionAsync(tenantIdentifier, divisionName);
+            return await DivisionService().GetAttributeAsync(context, division.Id, attributeName);
+        }
+        catch (Exception ex) { return Error(ex); }
     }
 }

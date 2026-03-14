@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -16,9 +17,13 @@ public sealed class EmployeeQueryTools(PayrollHttpClient httpClient) : ToolBase(
     public async Task<string> ListEmployeesAsync(
         [Description("The unique tenant identifier")] string tenantIdentifier)
     {
-        var context = await ResolveTenantContextAsync(tenantIdentifier);
-        var employees = await EmployeeService().QueryAsync<Employee>(context);
-        return JsonSerializer.Serialize(employees);
+        try
+        {
+            var context = await ResolveTenantContextAsync(tenantIdentifier);
+            var employees = await EmployeeService().QueryAsync<Employee>(context);
+            return JsonSerializer.Serialize(employees);
+        }
+        catch (Exception ex) { return Error(ex); }
     }
 
     /// <summary>Get an employee by identifier within a tenant</summary>
@@ -27,8 +32,12 @@ public sealed class EmployeeQueryTools(PayrollHttpClient httpClient) : ToolBase(
         [Description("The unique tenant identifier")] string tenantIdentifier,
         [Description("The employee identifier")] string employeeIdentifier)
     {
-        var (_, employee) = await ResolveEmployeeAsync(tenantIdentifier, employeeIdentifier);
-        return JsonSerializer.Serialize(employee);
+        try
+        {
+            var (_, employee) = await ResolveEmployeeAsync(tenantIdentifier, employeeIdentifier);
+            return JsonSerializer.Serialize(employee);
+        }
+        catch (Exception ex) { return Error(ex); }
     }
 
     /// <summary>Get a single attribute value of an employee</summary>
@@ -38,7 +47,11 @@ public sealed class EmployeeQueryTools(PayrollHttpClient httpClient) : ToolBase(
         [Description("The employee identifier")] string employeeIdentifier,
         [Description("The attribute name")] string attributeName)
     {
-        var (context, employee) = await ResolveEmployeeAsync(tenantIdentifier, employeeIdentifier);
-        return await EmployeeService().GetAttributeAsync(context, employee.Id, attributeName);
+        try
+        {
+            var (context, employee) = await ResolveEmployeeAsync(tenantIdentifier, employeeIdentifier);
+            return await EmployeeService().GetAttributeAsync(context, employee.Id, attributeName);
+        }
+        catch (Exception ex) { return Error(ex); }
     }
 }

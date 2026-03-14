@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -16,9 +17,13 @@ public sealed class UserQueryTools(PayrollHttpClient httpClient) : ToolBase(http
     public async Task<string> ListUsersAsync(
         [Description("The unique tenant identifier")] string tenantIdentifier)
     {
-        var context = await ResolveTenantContextAsync(tenantIdentifier);
-        var users = await UserService().QueryAsync<User>(context);
-        return JsonSerializer.Serialize(users);
+        try
+        {
+            var context = await ResolveTenantContextAsync(tenantIdentifier);
+            var users = await UserService().QueryAsync<User>(context);
+            return JsonSerializer.Serialize(users);
+        }
+        catch (Exception ex) { return Error(ex); }
     }
 
     /// <summary>Get a user by identifier within a tenant</summary>
@@ -27,8 +32,12 @@ public sealed class UserQueryTools(PayrollHttpClient httpClient) : ToolBase(http
         [Description("The unique tenant identifier")] string tenantIdentifier,
         [Description("The user identifier (typically an email address)")] string userIdentifier)
     {
-        var (_, user) = await ResolveUserAsync(tenantIdentifier, userIdentifier);
-        return JsonSerializer.Serialize(user);
+        try
+        {
+            var (_, user) = await ResolveUserAsync(tenantIdentifier, userIdentifier);
+            return JsonSerializer.Serialize(user);
+        }
+        catch (Exception ex) { return Error(ex); }
     }
 
     /// <summary>Get a single attribute value of a user</summary>
@@ -38,7 +47,11 @@ public sealed class UserQueryTools(PayrollHttpClient httpClient) : ToolBase(http
         [Description("The user identifier")] string userIdentifier,
         [Description("The attribute name")] string attributeName)
     {
-        var (context, user) = await ResolveUserAsync(tenantIdentifier, userIdentifier);
-        return await UserService().GetAttributeAsync(context, user.Id, attributeName);
+        try
+        {
+            var (context, user) = await ResolveUserAsync(tenantIdentifier, userIdentifier);
+            return await UserService().GetAttributeAsync(context, user.Id, attributeName);
+        }
+        catch (Exception ex) { return Error(ex); }
     }
 }

@@ -1,0 +1,54 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "files": [ "publish/PayrollEngine.McpServer.Tools.dll" ],
+          "src": "../"
+        }
+      ],
+      "dest": "api",
+      "includePrivateMembers": false,
+      "disableGitFeatures": false,
+      "disableDefaultFilter": false,
+      "namespaceLayout": "flattened",
+      "memberLayout": "samePage",
+      "filter": "filterConfig.yml"
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": [
+          "api/**.yml",
+          "api/index.md"
+        ]
+      },
+      {
+        "files": [
+          "toc.yml",
+          "*.md"
+        ]
+      }
+    ],
+    "resource": [
+      {
+        "files": [
+          "logo.svg",
+          "favicon.ico"
+        ]
+      }
+    ],
+    "output": "_site",
+    "globalMetadata": {
+      "_appTitle": "PE MCP Server Reference",
+      "_appName": ""
+    },
+    "template": [
+      "default",
+      "templates/darkerfx"
+    ],
+    "keepFileLink": false,
+    "disableGitFeatures": false
+  }
+}

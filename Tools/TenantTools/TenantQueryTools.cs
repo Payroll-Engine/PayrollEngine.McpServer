@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -18,8 +19,12 @@ public sealed class TenantQueryTools(PayrollHttpClient httpClient) : ToolBase(ht
     [McpServerTool(Name = "list_tenants"), Description("List all tenants in the Payroll Engine")]
     public async Task<string> ListTenantsAsync()
     {
-        var tenants = await TenantService().QueryAsync<Tenant>(Context);
-        return JsonSerializer.Serialize(tenants);
+        try
+        {
+            var tenants = await TenantService().QueryAsync<Tenant>(Context);
+            return JsonSerializer.Serialize(tenants);
+        }
+        catch (Exception ex) { return Error(ex); }
     }
 
     /// <summary>Get a tenant by identifier</summary>
@@ -27,8 +32,12 @@ public sealed class TenantQueryTools(PayrollHttpClient httpClient) : ToolBase(ht
     public async Task<string> GetTenantAsync(
         [Description("The unique tenant identifier")] string identifier)
     {
-        var tenant = await TenantService().GetAsync<Tenant>(Context, identifier);
-        return JsonSerializer.Serialize(tenant);
+        try
+        {
+            var tenant = await TenantService().GetAsync<Tenant>(Context, identifier);
+            return JsonSerializer.Serialize(tenant);
+        }
+        catch (Exception ex) { return Error(ex); }
     }
 
     /// <summary>Get a single tenant attribute by name</summary>
@@ -38,7 +47,11 @@ public sealed class TenantQueryTools(PayrollHttpClient httpClient) : ToolBase(ht
         [Description("The unique tenant identifier")] string tenantIdentifier,
         [Description("The attribute name")] string attributeName)
     {
-        var tenant = await ResolveTenantAsync(tenantIdentifier);
-        return await TenantService().GetAttributeAsync(Context, tenant.Id, attributeName);
+        try
+        {
+            var tenant = await ResolveTenantAsync(tenantIdentifier);
+            return await TenantService().GetAttributeAsync(Context, tenant.Id, attributeName);
+        }
+        catch (Exception ex) { return Error(ex); }
     }
 }

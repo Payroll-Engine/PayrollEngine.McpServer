@@ -1,0 +1,4 @@
+apiRules:
+- exclude:
+    uidRegex: ^PayrollEngine\.McpServer\.Tools\.TenantTools\.StartTenantResult$
+    type: Type

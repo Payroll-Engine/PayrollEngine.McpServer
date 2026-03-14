@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 using PayrollEngine.Client;
 using PayrollEngine.Client.Model;
@@ -8,13 +9,29 @@ using PayrollEngine.Client.Service.Api;
 namespace PayrollEngine.McpServer.Tools;
 
 /// <summary>Base class for all MCP tool classes.
-/// Provides typed service factories and identifier-to-id resolvers for all PE objects.
+/// Provides typed service factories, identifier-to-id resolvers, and uniform error handling.
 /// AI agents work exclusively with external string keys (Identifier/Name);
 /// internal integer IDs are resolved here before calling id-based service methods.</summary>
 public abstract class ToolBase(PayrollHttpClient httpClient)
 {
     /// <summary>The Payroll HTTP client used for backend communication</summary>
     protected PayrollHttpClient HttpClient { get; } = httpClient;
+
+    #region Error handling
+
+    /// <summary>Serializes a caught exception as a structured JSON error result.
+    /// All public tool methods must catch exceptions and delegate to this method
+    /// so the MCP client always receives valid JSON, never a raw exception message.</summary>
+    /// <param name="exception">The caught exception</param>
+    /// <returns>JSON: { "error": "...", "type": "..." }</returns>
+    protected static string Error(Exception exception)
+    {
+        var message = exception.GetBaseException().Message;
+        var type = exception.GetBaseException().GetType().Name;
+        return JsonSerializer.Serialize(new { error = message, type });
+    }
+
+    #endregion
 
     #region Service factories
 
@@ -39,6 +56,9 @@ public abstract class ToolBase(PayrollHttpClient httpClient)
     /// <summary>Creates a new lookup service</summary>
     protected LookupService LookupService() => new(HttpClient);
 
+    /// <summary>Creates a new lookup value service</summary>
+    protected LookupValueService LookupValueService() => new(HttpClient);
+
     /// <summary>Creates a new payroll service</summary>
     protected PayrollService PayrollService() => new(HttpClient);
 
@@ -51,17 +71,19 @@ public abstract class ToolBase(PayrollHttpClient httpClient)
     /// <summary>Creates a new payroll result service</summary>
     protected PayrollResultService PayrollResultService() => new(HttpClient);
 
+    /// <summary>Creates a new employee case value service</summary>
+    protected EmployeeCaseValueService EmployeeCaseValueService() => new(HttpClient);
+
+    /// <summary>Creates a new company case value service</summary>
+    protected CompanyCaseValueService CompanyCaseValueService() => new(HttpClient);
+
     #endregion
 
     #region Resolvers — Identifier/Name → object with Id
 
     private static readonly RootServiceContext RootContext = new();
 
-    /// <summary>Resolves a tenant by its identifier.
-    /// Unlocks all id-based tenant service methods (attributes, shared regulations).</summary>
-    /// <param name="tenantIdentifier">The external tenant identifier</param>
-    /// <returns>The resolved tenant including its internal Id</returns>
-    /// <exception cref="InvalidOperationException">Thrown when the tenant is not found</exception>
+    /// <summary>Resolves a tenant by its identifier</summary>
     protected async Task<Tenant> ResolveTenantAsync(string tenantIdentifier)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(tenantIdentifier);
@@ -73,21 +95,14 @@ public abstract class ToolBase(PayrollHttpClient httpClient)
         return tenant;
     }
 
-    /// <summary>Resolves a tenant context by identifier.
-    /// Use when only the TenantServiceContext is needed for subsequent child-object calls.</summary>
-    /// <param name="tenantIdentifier">The external tenant identifier</param>
-    /// <returns>A TenantServiceContext containing the resolved tenant Id</returns>
+    /// <summary>Resolves a TenantServiceContext by tenant identifier</summary>
     protected async Task<TenantServiceContext> ResolveTenantContextAsync(string tenantIdentifier)
     {
         var tenant = await ResolveTenantAsync(tenantIdentifier);
         return new TenantServiceContext(tenant.Id);
     }
 
-    /// <summary>Resolves a user by tenant identifier and user identifier.
-    /// Unlocks all id-based user service methods (attributes, password).</summary>
-    /// <param name="tenantIdentifier">The external tenant identifier</param>
-    /// <param name="userIdentifier">The external user identifier</param>
-    /// <returns>The tenant context and the resolved user including its internal Id</returns>
+    /// <summary>Resolves a user by tenant identifier and user identifier</summary>
     protected async Task<(TenantServiceContext Context, User User)> ResolveUserAsync(
         string tenantIdentifier, string userIdentifier)
     {
@@ -102,12 +117,7 @@ public abstract class ToolBase(PayrollHttpClient httpClient)
         return (context, user);
     }
 
-    /// <summary>Resolves a division by tenant identifier and division name.
-    /// Unlocks all id-based division service methods (attributes).
-    /// Note: Division uses Name as external key, not Identifier.</summary>
-    /// <param name="tenantIdentifier">The external tenant identifier</param>
-    /// <param name="divisionName">The division name</param>
-    /// <returns>The tenant context and the resolved division including its internal Id</returns>
+    /// <summary>Resolves a division by tenant identifier and division name</summary>
     protected async Task<(TenantServiceContext Context, Division Division)> ResolveDivisionAsync(
         string tenantIdentifier, string divisionName)
     {
@@ -122,11 +132,7 @@ public abstract class ToolBase(PayrollHttpClient httpClient)
         return (context, division);
     }
 
-    /// <summary>Resolves an employee by tenant identifier and employee identifier.
-    /// Unlocks all id-based employee service methods (attributes).</summary>
-    /// <param name="tenantIdentifier">The external tenant identifier</param>
-    /// <param name="employeeIdentifier">The external employee identifier</param>
-    /// <returns>The tenant context and the resolved employee including its internal Id</returns>
+    /// <summary>Resolves an employee by tenant identifier and employee identifier</summary>
     protected async Task<(TenantServiceContext Context, Employee Employee)> ResolveEmployeeAsync(
         string tenantIdentifier, string employeeIdentifier)
     {
@@ -141,11 +147,16 @@ public abstract class ToolBase(PayrollHttpClient httpClient)
         return (context, employee);
     }
 
-    /// <summary>Resolves a regulation context by tenant identifier and regulation name.
-    /// Required for WageTypeService and LookupService which need RegulationServiceContext.</summary>
-    /// <param name="tenantIdentifier">The external tenant identifier</param>
-    /// <param name="regulationName">The regulation name</param>
-    /// <returns>A RegulationServiceContext containing tenant Id and regulation Id</returns>
+    /// <summary>Resolves an EmployeeServiceContext by tenant and employee identifier.
+    /// Required for EmployeeCaseValueService which needs EmployeeServiceContext.</summary>
+    protected async Task<EmployeeServiceContext> ResolveEmployeeContextAsync(
+        string tenantIdentifier, string employeeIdentifier)
+    {
+        var (tenantContext, employee) = await ResolveEmployeeAsync(tenantIdentifier, employeeIdentifier);
+        return new EmployeeServiceContext(tenantContext.TenantId, employee.Id);
+    }
+
+    /// <summary>Resolves a RegulationServiceContext by tenant identifier and regulation name</summary>
     protected async Task<RegulationServiceContext> ResolveRegulationContextAsync(
         string tenantIdentifier, string regulationName)
     {
@@ -160,11 +171,23 @@ public abstract class ToolBase(PayrollHttpClient httpClient)
         return new RegulationServiceContext(tenantContext.TenantId, regulation.Id);
     }
 
-    /// <summary>Resolves a payroll context by tenant identifier and payroll name.
-    /// Required for PayrollService methods that query regulation items (WageTypes, Lookups, etc.).</summary>
-    /// <param name="tenantIdentifier">The external tenant identifier</param>
-    /// <param name="payrollName">The payroll name</param>
-    /// <returns>A PayrollServiceContext containing tenant Id and payroll Id</returns>
+    /// <summary>Resolves a LookupServiceContext by tenant, regulation and lookup name.
+    /// Required for LookupValueService which needs LookupServiceContext.</summary>
+    protected async Task<LookupServiceContext> ResolveLookupContextAsync(
+        string tenantIdentifier, string regulationName, string lookupName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(lookupName);
+        var regulationContext = await ResolveRegulationContextAsync(tenantIdentifier, regulationName);
+        var lookup = await LookupService().GetAsync<Lookup>(regulationContext, lookupName);
+        if (lookup == null)
+        {
+            throw new InvalidOperationException(
+                $"Lookup '{lookupName}' not found in regulation '{regulationName}' of tenant '{tenantIdentifier}'.");
+        }
+        return new LookupServiceContext(regulationContext.TenantId, regulationContext.RegulationId, lookup.Id);
+    }
+
+    /// <summary>Resolves a PayrollServiceContext by tenant identifier and payroll name</summary>
     protected async Task<PayrollServiceContext> ResolvePayrollContextAsync(
         string tenantIdentifier, string payrollName)
     {

@@ -57,29 +57,20 @@ public sealed class StartTenantTool(PayrollHttpClient httpClient) : ToolBase(htt
         [Description("Comma-separated list of division names to create, e.g. 'HQ,Sales,IT'")] string divisionNames)
     {
         var result = new StartTenantResult { TenantIdentifier = tenantIdentifier };
-
         try
         {
-            // 1 — Tenant
             var tenant = await EnsureTenantAsync(tenantIdentifier, culture);
-            var tenantId = tenant.Id;
-            var tenantContext = new TenantServiceContext(tenantId);
-
-            // 2 — Admin user
-            await EnsureUserAsync(tenantContext, adminUserIdentifier, adminFirstName, adminLastName,
-                culture, result);
-
-            // 3 — Divisions
+            var tenantContext = new TenantServiceContext(tenant.Id);
+            await EnsureUserAsync(tenantContext, adminUserIdentifier, adminFirstName, adminLastName, culture, result);
             foreach (var rawName in divisionNames.Split(',',
-                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries))
             {
                 await EnsureDivisionAsync(tenantContext, rawName, culture, result);
             }
-
             return JsonSerializer.Serialize(new StartTenantResult
             {
                 TenantIdentifier = tenantIdentifier,
-                TenantId = tenantId,
+                TenantId = tenant.Id,
                 CreatedUsers = result.CreatedUsers,
                 CreatedDivisions = result.CreatedDivisions,
                 Errors = result.Errors
