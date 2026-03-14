@@ -5,12 +5,15 @@ using System.Threading.Tasks;
 using ModelContextProtocol.Server;
 using PayrollEngine.Client;
 using PayrollEngine.Client.Model;
+using PayrollEngine.McpServer.Tools.Isolation;
 
 namespace PayrollEngine.McpServer.Tools.PeopleTools;
 
 /// <summary>MCP tools for employee queries</summary>
 [McpServerToolType]
-public sealed class EmployeeQueryTools(PayrollHttpClient httpClient) : ToolBase(httpClient)
+[ToolRole(McpRole.HR)]
+// ReSharper disable once UnusedType.Global
+public sealed class EmployeeQueryTools(PayrollHttpClient httpClient, IsolationContext isolation) : ToolBase(httpClient, isolation)
 {
     /// <summary>List employees of a tenant</summary>
     [McpServerTool(Name = "list_employees"), Description(
@@ -25,11 +28,7 @@ public sealed class EmployeeQueryTools(PayrollHttpClient httpClient) : ToolBase(
         try
         {
             var context = await ResolveTenantContextAsync(tenantIdentifier);
-            var query = new Query
-            {
-                Filter = filter,
-                Top = top > 0 ? top : null
-            };
+            var query = ActiveDivisionQuery(filter, top > 0 ? top : null);
             var employees = await EmployeeService().QueryAsync<Employee>(context, query);
             return JsonSerializer.Serialize(employees);
         }

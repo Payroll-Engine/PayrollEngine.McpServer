@@ -12,8 +12,8 @@
 	<ItemGroup>
 		<PackageReference Include="ModelContextProtocol" Version="0.2.0-preview.3" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0-preview.3.25171.5" />
-		<PackageReference Include="PayrollEngine.Client.Core" Version="0.10.0-beta.1" />
-		<PackageReference Include="PayrollEngine.Serilog" Version="0.10.0-beta.1" />
+		<PackageReference Include="PayrollEngine.Client.Core" Version="0.10.0-beta.dev" />
+		<PackageReference Include="PayrollEngine.Serilog" Version="0.10.0-beta.dev" />
 		<PackageReference Include="Serilog.Settings.Configuration" Version="10.0.0" />
 		<PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
 		<PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />

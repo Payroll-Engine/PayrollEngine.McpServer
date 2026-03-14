@@ -5,12 +5,15 @@ using System.Threading.Tasks;
 using ModelContextProtocol.Server;
 using PayrollEngine.Client;
 using PayrollEngine.Client.Model;
+using PayrollEngine.McpServer.Tools.Isolation;
 
 namespace PayrollEngine.McpServer.Tools.RegulationTools;
 
 /// <summary>MCP tools for regulation queries</summary>
 [McpServerToolType]
-public sealed class RegulationQueryTools(PayrollHttpClient httpClient) : ToolBase(httpClient)
+[ToolRole(McpRole.Regulation)]
+// ReSharper disable once UnusedType.Global
+public sealed class RegulationQueryTools(PayrollHttpClient httpClient, IsolationContext isolation) : ToolBase(httpClient, isolation)
 {
     /// <summary>List all regulations of a tenant</summary>
     [McpServerTool(Name = "list_regulations"), Description("List all regulations of a tenant")]
@@ -20,7 +23,7 @@ public sealed class RegulationQueryTools(PayrollHttpClient httpClient) : ToolBas
         try
         {
             var context = await ResolveTenantContextAsync(tenantIdentifier);
-            var regulations = await RegulationService().QueryAsync<Regulation>(context);
+            var regulations = await RegulationService().QueryAsync<Regulation>(context, ActiveQuery());
             return JsonSerializer.Serialize(regulations);
         }
         catch (Exception ex) { return Error(ex); }
@@ -51,7 +54,7 @@ public sealed class RegulationQueryTools(PayrollHttpClient httpClient) : ToolBas
         try
         {
             var context = await ResolveRegulationContextAsync(tenantIdentifier, regulationName);
-            var wageTypes = await WageTypeService().QueryAsync<WageType>(context);
+            var wageTypes = await WageTypeService().QueryAsync<WageType>(context, ActiveQuery());
             return JsonSerializer.Serialize(wageTypes);
         }
         catch (Exception ex) { return Error(ex); }
@@ -67,7 +70,7 @@ public sealed class RegulationQueryTools(PayrollHttpClient httpClient) : ToolBas
         try
         {
             var context = await ResolveRegulationContextAsync(tenantIdentifier, regulationName);
-            var lookups = await LookupService().QueryAsync<Lookup>(context);
+            var lookups = await LookupService().QueryAsync<Lookup>(context, ActiveQuery());
             return JsonSerializer.Serialize(lookups);
         }
         catch (Exception ex) { return Error(ex); }

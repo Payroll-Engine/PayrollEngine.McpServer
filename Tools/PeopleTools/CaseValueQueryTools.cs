@@ -5,13 +5,15 @@ using System.Threading.Tasks;
 using ModelContextProtocol.Server;
 using PayrollEngine.Client;
 using PayrollEngine.Client.Model;
-using PayrollEngine.Client.Service;
+using PayrollEngine.McpServer.Tools.Isolation;
 
 namespace PayrollEngine.McpServer.Tools.PeopleTools;
 
 /// <summary>MCP tools for case value queries</summary>
 [McpServerToolType]
-public sealed class CaseValueQueryTools(PayrollHttpClient httpClient) : ToolBase(httpClient)
+[ToolRole(McpRole.HR)]
+// ReSharper disable once UnusedType.Global
+public sealed class CaseValueQueryTools(PayrollHttpClient httpClient, IsolationContext isolation) : ToolBase(httpClient, isolation)
 {
     /// <summary>List all employee case values within a tenant</summary>
     [McpServerTool(Name = "list_employee_case_values"), Description(

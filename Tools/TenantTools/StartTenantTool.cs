@@ -6,13 +6,16 @@ using ModelContextProtocol.Server;
 using PayrollEngine.Client;
 using PayrollEngine.Client.Model;
 using PayrollEngine.Client.Service;
+using PayrollEngine.McpServer.Tools.Isolation;
 using Task = System.Threading.Tasks.Task;
 
 namespace PayrollEngine.McpServer.Tools.TenantTools;
 
 /// <summary>MCP tools for tenant setup</summary>
 [McpServerToolType]
-public sealed class StartTenantTool(PayrollHttpClient httpClient) : ToolBase(httpClient)
+[ToolRole(McpRole.System, McpPermission.Full)]
+// ReSharper disable once UnusedType.Global
+public sealed class StartTenantTool(PayrollHttpClient httpClient, IsolationContext isolation) : ToolBase(httpClient, isolation)
 {
     private static readonly RootServiceContext RootContext = new();
 
@@ -40,7 +43,7 @@ public sealed class StartTenantTool(PayrollHttpClient httpClient) : ToolBase(htt
             var tenantContext = new TenantServiceContext(tenant.Id);
             await EnsureUserAsync(tenantContext, adminUserIdentifier, adminFirstName, adminLastName, culture, result);
             foreach (var rawName in divisionNames.Split(',',
-                System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries))
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             {
                 await EnsureDivisionAsync(tenantContext, rawName, culture, result);
             }

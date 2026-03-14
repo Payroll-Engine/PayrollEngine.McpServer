@@ -6,9 +6,11 @@ namespace PayrollEngine.McpServer.Tools.TenantTools;
 public sealed class StartTenantResult
 {
     /// <summary>The tenant identifier</summary>
+    // ReSharper disable once UnusedAutoPropertyAccessor.Global
     public string TenantIdentifier { get; init; }
 
     /// <summary>The internal tenant id assigned by the backend</summary>
+    // ReSharper disable once UnusedAutoPropertyAccessor.Global
     public int TenantId { get; init; }
 
     /// <summary>Identifiers of users created during this operation</summary>

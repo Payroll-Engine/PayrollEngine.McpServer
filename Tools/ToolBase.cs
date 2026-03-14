@@ -3,8 +3,10 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using PayrollEngine.Client;
 using PayrollEngine.Client.Model;
+using PayrollEngine.Client.QueryExpression;
 using PayrollEngine.Client.Service;
 using PayrollEngine.Client.Service.Api;
+using PayrollEngine.McpServer.Tools.Isolation;
 
 namespace PayrollEngine.McpServer.Tools;
 
@@ -12,10 +14,67 @@ namespace PayrollEngine.McpServer.Tools;
 /// Provides typed service factories, identifier-to-id resolvers, and uniform error handling.
 /// AI agents work exclusively with external string keys (Identifier/Name);
 /// internal integer IDs are resolved here before calling id-based service methods.</summary>
-public abstract class ToolBase(PayrollHttpClient httpClient)
+public abstract class ToolBase(PayrollHttpClient httpClient, IsolationContext isolation)
 {
     /// <summary>The Payroll HTTP client used for backend communication</summary>
-    protected PayrollHttpClient HttpClient { get; } = httpClient;
+    private PayrollHttpClient HttpClient { get; } = httpClient;
+
+    /// <summary>The active data isolation context. Every tool call is filtered through this context.</summary>
+    private IsolationContext Isolation { get; } = isolation;
+
+    #region Query helpers
+
+    /// <summary>Builds a Query with status=Active filter, optionally combined with an additional OData filter.
+    /// All list operations use this to exclude inactive objects by default.</summary>
+    /// <param name="userFilter">Optional additional OData filter from the caller</param>
+    /// <param name="top">Optional result limit</param>
+    /// <param name="orderBy">Optional order-by expression</param>
+    /// <returns>Query with active-only filter</returns>
+    protected static Query ActiveQuery(string userFilter = null, int? top = null, string orderBy = null)
+    {
+        var activeFilter = new ActiveStatus();
+        var combinedFilter = string.IsNullOrWhiteSpace(userFilter)
+            ? activeFilter.Expression
+            : new Filter(activeFilter.Expression).And(new Filter(userFilter)).Expression;
+        return new Query
+        {
+            Filter = combinedFilter,
+            Top = top,
+            OrderBy = orderBy
+        };
+    }
+
+    /// <summary>Builds a DivisionQuery with status=Active filter.
+    /// Required for EmployeeService.QueryAsync which expects DivisionQuery.</summary>
+    /// <param name="userFilter">Optional additional OData filter from the caller</param>
+    /// <param name="top">Optional result limit</param>
+    /// <returns>DivisionQuery with active-only filter</returns>
+    protected static DivisionQuery ActiveDivisionQuery(string userFilter = null, int? top = null)
+    {
+        var activeFilter = new ActiveStatus();
+        var combinedFilter = string.IsNullOrWhiteSpace(userFilter)
+            ? activeFilter.Expression
+            : new Filter(activeFilter.Expression).And(new Filter(userFilter)).Expression;
+        return new DivisionQuery
+        {
+            Filter = combinedFilter,
+            Top = top
+        };
+    }
+
+    /// <summary>Builds a tenant-scoped active query.
+    /// In Tenant isolation mode, adds an identifier filter so list_tenants only returns the configured tenant.</summary>
+    protected Query IsolatedTenantQuery()
+    {
+        if (Isolation.Level == IsolationLevel.Tenant &&
+            !string.IsNullOrWhiteSpace(Isolation.TenantIdentifier))
+        {
+            return ActiveQuery($"identifier eq '{Isolation.TenantIdentifier}'");
+        }
+        return ActiveQuery();
+    }
+
+    #endregion
 
     #region Error handling
 
@@ -81,16 +140,30 @@ public abstract class ToolBase(PayrollHttpClient httpClient)
 
     #region Resolvers — Identifier/Name → object with Id
 
+    /// <summary>Returns the effective tenant identifier, enforcing isolation.
+    /// In Tenant mode the configured identifier overrides whatever the AI agent passed.
+    /// Division and Employee levels are not yet supported and throw NotSupportedException.</summary>
+    /// <param name="tenantIdentifier">Identifier provided by the AI agent</param>
+    private string EffectiveTenant(string tenantIdentifier) => Isolation.Level switch
+    {
+        IsolationLevel.MultiTenant => tenantIdentifier,
+        IsolationLevel.Tenant      => Isolation.TenantIdentifier,
+        _                          => throw new NotSupportedException(
+            $"Isolation level '{Isolation.Level}' is architecturally reserved and will be available in a future release.")
+    };
+
     private static readonly RootServiceContext RootContext = new();
 
-    /// <summary>Resolves a tenant by its identifier</summary>
+    /// <summary>Resolves a tenant by its identifier, applying isolation enforcement.
+    /// In Tenant mode, the configured tenant identifier always takes precedence.</summary>
     protected async Task<Tenant> ResolveTenantAsync(string tenantIdentifier)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(tenantIdentifier);
-        var tenant = await TenantService().GetAsync<Tenant>(RootContext, tenantIdentifier);
+        var effective = EffectiveTenant(tenantIdentifier);
+        ArgumentException.ThrowIfNullOrWhiteSpace(effective);
+        var tenant = await TenantService().GetAsync<Tenant>(RootContext, effective);
         if (tenant == null)
         {
-            throw new InvalidOperationException($"Tenant '{tenantIdentifier}' not found.");
+            throw new InvalidOperationException($"Tenant '{effective}' not found.");
         }
         return tenant;
     }

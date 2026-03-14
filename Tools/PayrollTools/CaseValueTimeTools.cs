@@ -5,13 +5,15 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using ModelContextProtocol.Server;
 using PayrollEngine.Client;
-using PayrollEngine.Client.Model;
+using PayrollEngine.McpServer.Tools.Isolation;
 
 namespace PayrollEngine.McpServer.Tools.PayrollTools;
 
 /// <summary>MCP tools for time-based case value queries</summary>
 [McpServerToolType]
-public sealed class CaseValueTimeTools(PayrollHttpClient httpClient) : ToolBase(httpClient)
+[ToolRole(McpRole.Payroll)]
+// ReSharper disable once UnusedType.Global
+public sealed class CaseValueTimeTools(PayrollHttpClient httpClient, IsolationContext isolation) : ToolBase(httpClient, isolation)
 {
     /// <summary>Get case values at a specific point in time</summary>
     [McpServerTool(Name = "get_case_time_values"), Description(

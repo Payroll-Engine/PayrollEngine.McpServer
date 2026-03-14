@@ -5,12 +5,15 @@ using System.Threading.Tasks;
 using ModelContextProtocol.Server;
 using PayrollEngine.Client;
 using PayrollEngine.Client.Model;
+using PayrollEngine.McpServer.Tools.Isolation;
 
 namespace PayrollEngine.McpServer.Tools.PayrollTools;
 
 /// <summary>MCP tools for payroll, payrun and job queries</summary>
 [McpServerToolType]
-public sealed class PayrollQueryTools(PayrollHttpClient httpClient) : ToolBase(httpClient)
+[ToolRole(McpRole.Payroll)]
+// ReSharper disable once UnusedType.Global
+public sealed class PayrollQueryTools(PayrollHttpClient httpClient, IsolationContext isolation) : ToolBase(httpClient, isolation)
 {
     /// <summary>List all payrolls of a tenant</summary>
     [McpServerTool(Name = "list_payrolls"), Description("List all payrolls of a tenant")]
@@ -20,7 +23,7 @@ public sealed class PayrollQueryTools(PayrollHttpClient httpClient) : ToolBase(h
         try
         {
             var context = await ResolveTenantContextAsync(tenantIdentifier);
-            var payrolls = await PayrollService().QueryAsync<Payroll>(context);
+            var payrolls = await PayrollService().QueryAsync<Payroll>(context, ActiveQuery());
             return JsonSerializer.Serialize(payrolls);
         }
         catch (Exception ex) { return Error(ex); }
@@ -49,7 +52,7 @@ public sealed class PayrollQueryTools(PayrollHttpClient httpClient) : ToolBase(h
         try
         {
             var context = await ResolveTenantContextAsync(tenantIdentifier);
-            var payruns = await PayrunService().QueryAsync<Payrun>(context);
+            var payruns = await PayrunService().QueryAsync<Payrun>(context, ActiveQuery());
             return JsonSerializer.Serialize(payruns);
         }
         catch (Exception ex) { return Error(ex); }
@@ -64,7 +67,7 @@ public sealed class PayrollQueryTools(PayrollHttpClient httpClient) : ToolBase(h
         try
         {
             var context = await ResolveTenantContextAsync(tenantIdentifier);
-            var query = new Query { OrderBy = "created desc" };
+            var query = ActiveQuery(orderBy: "created desc");
             var jobs = await PayrunJobService().QueryAsync<PayrunJob>(context, query);
             return JsonSerializer.Serialize(jobs);
         }

@@ -132,11 +132,11 @@ these parameters:
 
 | Parameter | Type | Description |
 |:--|:--|:--|
-| `valueDate` | `DateTime?` | The point in time for value validity. Default: today. |
-| `evaluationDate` | `DateTime?` | The knowledge cutoff date. Default: today. |
+| `valueDate` | `string` (ISO 8601) | The point in time for value validity. Default: today. |
+| `evaluationDate` | `string` (ISO 8601) | The knowledge cutoff date. Default: today. |
 | `forecast` | `string` | Forecast name. `null` = real values only. |
-| `employeeId` | `int?` | For `CaseType.Employee`: specific employee, or `null` for all employees. |
-| `caseFieldNames` | `IEnumerable<string>` | Filter by specific fields. `null` = all fields. |
+| `employeeIdentifier` | `string` | For `CaseType.Employee`: employee identifier, or omit for all employees. Resolved internally to the employee ID. |
+| `caseFieldNames` | `string` (comma-separated) | Filter by specific fields, e.g. `"Salary,City,IBAN"`. Omit for all fields. |
 
 ---
 
@@ -146,12 +146,12 @@ these parameters:
 at year-end 2025 — excluding any corrections entered in 2026.
 
 ```
-caseType       = Employee
-caseFieldNames = ["Salary"]
-valueDate      = 2025-12-31
-evaluationDate = 2025-12-31   ← historical: only what was known on that date
-forecast       = null
-employeeId     = null         ← all employees (tenant-wide)
+caseType            = Employee
+caseFieldNames      = "Salary"
+valueDate           = 2025-12-31
+evaluationDate      = 2025-12-31   ← historical: only what was known on that date
+forecast            = null
+employeeIdentifier  = (omit)       ← all employees (tenant-wide)
 ```
 
 **Scenario:** Same report, but including corrections entered retroactively after year-end:
@@ -177,8 +177,12 @@ The backend endpoint `GET /payrolls/{id}/cases/values/time` accepts all three pa
 The `PayrollService.GetCaseTimeValuesAsync` method in `Client.Core` maps them directly to query
 string parameters.
 
-When `caseType = Employee` and `employeeId` is omitted, the backend executes the tenant-wide
-stored procedure `GetEmployeeCaseValuesByTenant`, which returns values for all active employees
-in a single query. The `EmployeeId` field on each returned `CaseValue` identifies the employee.
+The MCP tool accepts `employeeIdentifier` (a human-readable string) and resolves it to the
+internal employee ID automatically via `ResolveEmployeeAsync`.
+
+When `caseType = Employee` and `employeeIdentifier` is omitted, the backend executes the
+tenant-wide stored procedure `GetEmployeeCaseValuesByTenant`, which returns values for all
+active employees in a single query. The `EmployeeId` field on each returned `CaseValue`
+identifies the employee.
 
 See also: `GetEmployeeCaseValuesByTenant.sql` in `Persistence.SqlServer/StoredProcedures`.

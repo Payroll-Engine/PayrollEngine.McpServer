@@ -5,12 +5,15 @@ using System.Threading.Tasks;
 using ModelContextProtocol.Server;
 using PayrollEngine.Client;
 using PayrollEngine.Client.Model;
+using PayrollEngine.McpServer.Tools.Isolation;
 
 namespace PayrollEngine.McpServer.Tools.PeopleTools;
 
 /// <summary>MCP tools for division queries</summary>
 [McpServerToolType]
-public sealed class DivisionQueryTools(PayrollHttpClient httpClient) : ToolBase(httpClient)
+[ToolRole(McpRole.HR)]
+// ReSharper disable once UnusedType.Global
+public sealed class DivisionQueryTools(PayrollHttpClient httpClient, IsolationContext isolation) : ToolBase(httpClient, isolation)
 {
     /// <summary>List all divisions of a tenant</summary>
     [McpServerTool(Name = "list_divisions"), Description("List all divisions of a tenant")]
@@ -20,7 +23,7 @@ public sealed class DivisionQueryTools(PayrollHttpClient httpClient) : ToolBase(
         try
         {
             var context = await ResolveTenantContextAsync(tenantIdentifier);
-            var divisions = await DivisionService().QueryAsync<Division>(context);
+            var divisions = await DivisionService().QueryAsync<Division>(context, ActiveQuery());
             return JsonSerializer.Serialize(divisions);
         }
         catch (Exception ex) { return Error(ex); }

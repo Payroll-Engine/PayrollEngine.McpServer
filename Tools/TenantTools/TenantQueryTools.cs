@@ -6,12 +6,15 @@ using ModelContextProtocol.Server;
 using PayrollEngine.Client;
 using PayrollEngine.Client.Model;
 using PayrollEngine.Client.Service;
+using PayrollEngine.McpServer.Tools.Isolation;
 
 namespace PayrollEngine.McpServer.Tools.TenantTools;
 
 /// <summary>MCP tools for tenant queries</summary>
 [McpServerToolType]
-public sealed class TenantQueryTools(PayrollHttpClient httpClient) : ToolBase(httpClient)
+[ToolRole(McpRole.System)]
+// ReSharper disable once UnusedType.Global
+public sealed class TenantQueryTools(PayrollHttpClient httpClient, IsolationContext isolation) : ToolBase(httpClient, isolation)
 {
     private static readonly RootServiceContext Context = new();
 
@@ -21,7 +24,7 @@ public sealed class TenantQueryTools(PayrollHttpClient httpClient) : ToolBase(ht
     {
         try
         {
-            var tenants = await TenantService().QueryAsync<Tenant>(Context);
+            var tenants = await TenantService().QueryAsync<Tenant>(Context, IsolatedTenantQuery());
             return JsonSerializer.Serialize(tenants);
         }
         catch (Exception ex) { return Error(ex); }
