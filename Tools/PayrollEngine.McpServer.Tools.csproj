@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<AssemblyName>PayrollEngine.McpServer.Tools</AssemblyName>
+		<RootNamespace>PayrollEngine.McpServer.Tools</RootNamespace>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<Description>Payroll Engine MCP Server tools</Description>
+	</PropertyGroup>
+
+	<!-- help file generation -->
+	<PropertyGroup>
+		<DocumentationFile>$(AssemblyName).xml</DocumentationFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="ModelContextProtocol" Version="0.2.0-preview.3" />
+		<PackageReference Include="PayrollEngine.Client.Core" Version="0.9.0-beta.dev" />
+	</ItemGroup>
+
+</Project>

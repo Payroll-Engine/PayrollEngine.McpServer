@@ -1,0 +1,241 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>PayrollEngine.McpServer.Tools</name>
+    </assembly>
+    <members>
+        <member name="T:PayrollEngine.McpServer.Tools.PayrollTools.PayrollQueryTools">
+            <summary>MCP tools for payroll, payrun and job queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.PayrollQueryTools.#ctor(PayrollEngine.Client.PayrollHttpClient)">
+            <summary>MCP tools for payroll, payrun and job queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.PayrollQueryTools.ListPayrollsAsync(System.String)">
+            <summary>List all payrolls of a tenant</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.PayrollQueryTools.GetPayrollAsync(System.String,System.String)">
+            <summary>Get a payroll by name within a tenant</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.PayrollQueryTools.ListPayrunsAsync(System.String)">
+            <summary>List all payruns of a tenant</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.PayrollQueryTools.ListPayrunJobsAsync(System.String)">
+            <summary>List all payrun jobs of a tenant, ordered by creation date descending</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.PayrollQueryTools.ListPayrollWageTypesAsync(System.String,System.String)">
+            <summary>List all effective wage types of a payroll, merged across all regulation layers</summary>
+        </member>
+        <member name="T:PayrollEngine.McpServer.Tools.PeopleTools.DivisionQueryTools">
+            <summary>MCP tools for division queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.DivisionQueryTools.#ctor(PayrollEngine.Client.PayrollHttpClient)">
+            <summary>MCP tools for division queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.DivisionQueryTools.ListDivisionsAsync(System.String)">
+            <summary>List all divisions of a tenant</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.DivisionQueryTools.GetDivisionAsync(System.String,System.String)">
+            <summary>Get a division by name within a tenant</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.DivisionQueryTools.GetDivisionAttributeAsync(System.String,System.String,System.String)">
+            <summary>Get a single attribute value of a division</summary>
+        </member>
+        <member name="T:PayrollEngine.McpServer.Tools.PeopleTools.EmployeeQueryTools">
+            <summary>MCP tools for employee queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.EmployeeQueryTools.#ctor(PayrollEngine.Client.PayrollHttpClient)">
+            <summary>MCP tools for employee queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.EmployeeQueryTools.ListEmployeesAsync(System.String)">
+            <summary>List all employees of a tenant</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.EmployeeQueryTools.GetEmployeeAsync(System.String,System.String)">
+            <summary>Get an employee by identifier within a tenant</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.EmployeeQueryTools.GetEmployeeAttributeAsync(System.String,System.String,System.String)">
+            <summary>Get a single attribute value of an employee</summary>
+        </member>
+        <member name="T:PayrollEngine.McpServer.Tools.PeopleTools.UserQueryTools">
+            <summary>MCP tools for user queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.UserQueryTools.#ctor(PayrollEngine.Client.PayrollHttpClient)">
+            <summary>MCP tools for user queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.UserQueryTools.ListUsersAsync(System.String)">
+            <summary>List all users of a tenant</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.UserQueryTools.GetUserAsync(System.String,System.String)">
+            <summary>Get a user by identifier within a tenant</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.UserQueryTools.GetUserAttributeAsync(System.String,System.String,System.String)">
+            <summary>Get a single attribute value of a user</summary>
+        </member>
+        <member name="T:PayrollEngine.McpServer.Tools.RegulationTools.RegulationQueryTools">
+            <summary>MCP tools for regulation queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.RegulationTools.RegulationQueryTools.#ctor(PayrollEngine.Client.PayrollHttpClient)">
+            <summary>MCP tools for regulation queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.RegulationTools.RegulationQueryTools.ListRegulationsAsync(System.String)">
+            <summary>List all regulations of a tenant</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.RegulationTools.RegulationQueryTools.GetRegulationAsync(System.String,System.String)">
+            <summary>Get a regulation by name within a tenant</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.RegulationTools.RegulationQueryTools.ListWageTypesAsync(System.String,System.String)">
+            <summary>List all wage types of a regulation within a tenant</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.RegulationTools.RegulationQueryTools.ListLookupsAsync(System.String,System.String)">
+            <summary>List all lookups of a regulation within a tenant</summary>
+        </member>
+        <member name="T:PayrollEngine.McpServer.Tools.TenantTools.StartTenantResult">
+            <summary>Result of a StartTenant operation</summary>
+        </member>
+        <member name="P:PayrollEngine.McpServer.Tools.TenantTools.StartTenantResult.TenantIdentifier">
+            <summary>The tenant identifier</summary>
+        </member>
+        <member name="P:PayrollEngine.McpServer.Tools.TenantTools.StartTenantResult.TenantId">
+            <summary>The internal tenant id assigned by the backend</summary>
+        </member>
+        <member name="P:PayrollEngine.McpServer.Tools.TenantTools.StartTenantResult.CreatedUsers">
+            <summary>Identifiers of users created during this operation</summary>
+        </member>
+        <member name="P:PayrollEngine.McpServer.Tools.TenantTools.StartTenantResult.CreatedDivisions">
+            <summary>Names of divisions created during this operation</summary>
+        </member>
+        <member name="P:PayrollEngine.McpServer.Tools.TenantTools.StartTenantResult.Errors">
+            <summary>Error messages collected during this operation</summary>
+        </member>
+        <member name="P:PayrollEngine.McpServer.Tools.TenantTools.StartTenantResult.Success">
+            <summary>True when no errors occurred</summary>
+        </member>
+        <member name="T:PayrollEngine.McpServer.Tools.TenantTools.StartTenantTool">
+            <summary>MCP tools for tenant setup</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.TenantTools.StartTenantTool.#ctor(PayrollEngine.Client.PayrollHttpClient)">
+            <summary>MCP tools for tenant setup</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.TenantTools.StartTenantTool.StartTenantAsync(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Creates a new tenant with an initial admin user and one or more divisions.
+            Equivalent to the Console StartTenant command, but callable by AI agents.
+            Idempotent: skips creation of objects that already exist.
+            </summary>
+        </member>
+        <member name="T:PayrollEngine.McpServer.Tools.TenantTools.TenantQueryTools">
+            <summary>MCP tools for tenant queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.TenantTools.TenantQueryTools.#ctor(PayrollEngine.Client.PayrollHttpClient)">
+            <summary>MCP tools for tenant queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.TenantTools.TenantQueryTools.ListTenantsAsync">
+            <summary>List all tenants</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.TenantTools.TenantQueryTools.GetTenantAsync(System.String)">
+            <summary>Get a tenant by identifier</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.TenantTools.TenantQueryTools.GetTenantAttributeAsync(System.String,System.String)">
+            <summary>Get a single tenant attribute by name</summary>
+        </member>
+        <member name="T:PayrollEngine.McpServer.Tools.ToolBase">
+            <summary>Base class for all MCP tool classes.
+            Provides typed service factories and identifier-to-id resolvers for all PE objects.
+            AI agents work exclusively with external string keys (Identifier/Name);
+            internal integer IDs are resolved here before calling id-based service methods.</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.#ctor(PayrollEngine.Client.PayrollHttpClient)">
+            <summary>Base class for all MCP tool classes.
+            Provides typed service factories and identifier-to-id resolvers for all PE objects.
+            AI agents work exclusively with external string keys (Identifier/Name);
+            internal integer IDs are resolved here before calling id-based service methods.</summary>
+        </member>
+        <member name="P:PayrollEngine.McpServer.Tools.ToolBase.HttpClient">
+            <summary>The Payroll HTTP client used for backend communication</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.TenantService">
+            <summary>Creates a new tenant service</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.UserService">
+            <summary>Creates a new user service</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.DivisionService">
+            <summary>Creates a new division service</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.EmployeeService">
+            <summary>Creates a new employee service</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.RegulationService">
+            <summary>Creates a new regulation service</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.WageTypeService">
+            <summary>Creates a new wage type service</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.LookupService">
+            <summary>Creates a new lookup service</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.PayrollService">
+            <summary>Creates a new payroll service</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.PayrunService">
+            <summary>Creates a new payrun service</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.PayrunJobService">
+            <summary>Creates a new payrun job service</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.PayrollResultService">
+            <summary>Creates a new payroll result service</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.ResolveTenantAsync(System.String)">
+            <summary>Resolves a tenant by its identifier.
+            Unlocks all id-based tenant service methods (attributes, shared regulations).</summary>
+            <param name="tenantIdentifier">The external tenant identifier</param>
+            <returns>The resolved tenant including its internal Id</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown when the tenant is not found</exception>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.ResolveTenantContextAsync(System.String)">
+            <summary>Resolves a tenant context by identifier.
+            Use when only the TenantServiceContext is needed for subsequent child-object calls.</summary>
+            <param name="tenantIdentifier">The external tenant identifier</param>
+            <returns>A TenantServiceContext containing the resolved tenant Id</returns>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.ResolveUserAsync(System.String,System.String)">
+            <summary>Resolves a user by tenant identifier and user identifier.
+            Unlocks all id-based user service methods (attributes, password).</summary>
+            <param name="tenantIdentifier">The external tenant identifier</param>
+            <param name="userIdentifier">The external user identifier</param>
+            <returns>The tenant context and the resolved user including its internal Id</returns>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.ResolveDivisionAsync(System.String,System.String)">
+            <summary>Resolves a division by tenant identifier and division name.
+            Unlocks all id-based division service methods (attributes).
+            Note: Division uses Name as external key, not Identifier.</summary>
+            <param name="tenantIdentifier">The external tenant identifier</param>
+            <param name="divisionName">The division name</param>
+            <returns>The tenant context and the resolved division including its internal Id</returns>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.ResolveEmployeeAsync(System.String,System.String)">
+            <summary>Resolves an employee by tenant identifier and employee identifier.
+            Unlocks all id-based employee service methods (attributes).</summary>
+            <param name="tenantIdentifier">The external tenant identifier</param>
+            <param name="employeeIdentifier">The external employee identifier</param>
+            <returns>The tenant context and the resolved employee including its internal Id</returns>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.ResolveRegulationContextAsync(System.String,System.String)">
+            <summary>Resolves a regulation context by tenant identifier and regulation name.
+            Required for WageTypeService and LookupService which need RegulationServiceContext.</summary>
+            <param name="tenantIdentifier">The external tenant identifier</param>
+            <param name="regulationName">The regulation name</param>
+            <returns>A RegulationServiceContext containing tenant Id and regulation Id</returns>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.ResolvePayrollContextAsync(System.String,System.String)">
+            <summary>Resolves a payroll context by tenant identifier and payroll name.
+            Required for PayrollService methods that query regulation items (WageTypes, Lookups, etc.).</summary>
+            <param name="tenantIdentifier">The external tenant identifier</param>
+            <param name="payrollName">The payroll name</param>
+            <returns>A PayrollServiceContext containing tenant Id and payroll Id</returns>
+        </member>
+        <member name="T:PayrollEngine.McpServer.Tools.ToolsMarker">
+            <summary>Assembly marker for MCP tool discovery</summary>
+        </member>
+    </members>
+</doc>
