@@ -12,15 +12,25 @@ namespace PayrollEngine.McpServer.Tools.PeopleTools;
 [McpServerToolType]
 public sealed class EmployeeQueryTools(PayrollHttpClient httpClient) : ToolBase(httpClient)
 {
-    /// <summary>List all employees of a tenant</summary>
-    [McpServerTool(Name = "list_employees"), Description("List all employees of a tenant")]
+    /// <summary>List employees of a tenant</summary>
+    [McpServerTool(Name = "list_employees"), Description(
+        "List employees of a tenant. " +
+        "Use the filter parameter to narrow results by any employee field, e.g. \"lastName eq 'Müller'\" or \"contains(identifier, 'acme')\". " +
+        "Use top to limit the result count (default: 200).")]
     public async Task<string> ListEmployeesAsync(
-        [Description("The unique tenant identifier")] string tenantIdentifier)
+        [Description("The unique tenant identifier")] string tenantIdentifier,
+        [Description("OData filter expression, e.g. \"lastName eq 'Müller'\" or \"contains(identifier, 'acme')\"")] string filter = null,
+        [Description("Maximum number of results (default: 200)")] int top = 200)
     {
         try
         {
             var context = await ResolveTenantContextAsync(tenantIdentifier);
-            var employees = await EmployeeService().QueryAsync<Employee>(context);
+            var query = new Query
+            {
+                Filter = filter,
+                Top = top > 0 ? top : null
+            };
+            var employees = await EmployeeService().QueryAsync<Employee>(context, query);
             return JsonSerializer.Serialize(employees);
         }
         catch (Exception ex) { return Error(ex); }
