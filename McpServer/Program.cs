@@ -50,7 +50,10 @@ sealed class Program
         }
         catch (Exception exception)
         {
-            Log.Critical(exception, exception.GetBaseException().Message);
+            // write to stderr — stdout is reserved for MCP protocol, Serilog may not be initialized
+            await Console.Error.WriteLineAsync($"[FATAL] {exception.GetBaseException().GetType().Name}: {exception.GetBaseException().Message}");
+            await Console.Error.WriteLineAsync(exception.ToString());
+            try { Log.Critical(exception, exception.GetBaseException().Message); } catch { /* Serilog not available */ }
         }
     }
 
@@ -63,24 +66,47 @@ sealed class Program
         var permittedTypes = ToolRegistrar.GetPermittedTypes(toolsAssembly, permissions).ToList();
 
         // Locate WithTools<T>(IMcpServerBuilder) in the MCP SDK via reflection.
-        // This is robust across SDK refactors — finds the method by signature regardless of class.
-        var withToolsMethod = typeof(IMcpServerBuilder).Assembly
-            .GetTypes()
+        // Searches both the main assembly and ModelContextProtocol.Core for the generic overload.
+        var searchAssemblies = new[]
+        {
+            typeof(IMcpServerBuilder).Assembly,
+            AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(a => a.GetName().Name == "ModelContextProtocol.Core")
+        }.Where(a => a != null);
+
+        var withToolsMethod = searchAssemblies
+            .SelectMany(a => a.GetTypes())
             .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))
             .FirstOrDefault(m =>
                 m.Name == "WithTools" &&
                 m.IsGenericMethodDefinition &&
                 m.GetGenericArguments().Length == 1 &&
-                m.GetParameters().Length == 1 &&
+                m.GetParameters().Length >= 1 &&
                 m.GetParameters()[0].ParameterType == typeof(IMcpServerBuilder));
 
         if (withToolsMethod == null)
+        {
+            // Diagnostic: list all WithTools overloads found
+            var all = searchAssemblies
+                .SelectMany(a => a.GetTypes())
+                .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))
+                .Where(m => m.Name == "WithTools")
+                .Select(m => $"{m.DeclaringType?.FullName}.{m.Name}({string.Join(", ", m.GetParameters().Select(p => p.ParameterType.Name))}) generic={m.IsGenericMethodDefinition} gargs={m.GetGenericArguments().Length}")
+                .ToList();
             throw new InvalidOperationException(
-                "WithTools<T>(IMcpServerBuilder) not found in the MCP SDK. " +
-                "Ensure ModelContextProtocol package is correctly referenced.");
+                $"WithTools<T>(IMcpServerBuilder) not found in the MCP SDK. Found overloads: {string.Join(" | ", all)}");
+        }
 
+        // Build the parameter array — first param is IMcpServerBuilder, remaining are optional (Type.Missing)
+        var paramCount = withToolsMethod.GetParameters().Length;
         foreach (var type in permittedTypes)
-            withToolsMethod.MakeGenericMethod(type).Invoke(null, [mcpBuilder]);
+        {
+            var invokeArgs = new object[paramCount];
+            invokeArgs[0] = mcpBuilder;
+            for (var i = 1; i < paramCount; i++)
+                invokeArgs[i] = Type.Missing;
+            withToolsMethod.MakeGenericMethod(type).Invoke(null, invokeArgs);
+        }
 
         Log.Information($"Registered {permittedTypes.Count} tool class(es) based on active permissions.");
     }
