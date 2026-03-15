@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ModelContextProtocol.Server;
@@ -69,7 +71,22 @@ public sealed class PayrollQueryTools(PayrollHttpClient httpClient, IsolationCon
             var context = await ResolveTenantContextAsync(tenantIdentifier);
             var query = ActiveQuery(orderBy: "created desc");
             var jobs = await PayrunJobService().QueryAsync<PayrunJob>(context, query);
-            return JsonSerializer.Serialize(jobs);
+
+            // resolve distinct division names
+            var divisionNames = new Dictionary<int, string>();
+            foreach (var divisionId in jobs.Select(j => j.DivisionId).Distinct())
+            {
+                var division = await DivisionService().GetAsync<Division>(context, divisionId);
+                if (division != null)
+                    divisionNames[divisionId] = division.Name;
+            }
+
+            var result = new
+            {
+                divisions = divisionNames,
+                payrunJobs = jobs
+            };
+            return JsonSerializer.Serialize(result);
         }
         catch (Exception ex) { return Error(ex); }
     }

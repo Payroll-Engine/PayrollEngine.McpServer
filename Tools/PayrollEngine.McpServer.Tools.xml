@@ -121,6 +121,15 @@
         <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.CaseValueTimeTools.GetCaseTimeValuesAsync(System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String)">
             <summary>Get case values at a specific point in time</summary>
         </member>
+        <member name="T:PayrollEngine.McpServer.Tools.PayrollTools.ConsolidatedResultTools">
+            <summary>MCP tools for consolidated payroll result queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.ConsolidatedResultTools.#ctor(PayrollEngine.Client.PayrollHttpClient,PayrollEngine.McpServer.Tools.Isolation.IsolationContext)">
+            <summary>MCP tools for consolidated payroll result queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.ConsolidatedResultTools.GetConsolidatedPayrollResultAsync(System.String,System.String,System.String,System.String,System.String)">
+            <summary>Get the consolidated payroll result for an employee and period</summary>
+        </member>
         <member name="T:PayrollEngine.McpServer.Tools.PayrollTools.PayrollQueryTools">
             <summary>MCP tools for payroll, payrun and job queries</summary>
         </member>
@@ -141,6 +150,27 @@
         </member>
         <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.PayrollQueryTools.ListPayrollWageTypesAsync(System.String,System.String)">
             <summary>List all effective wage types of a payroll merged across all regulation layers</summary>
+        </member>
+        <member name="T:PayrollEngine.McpServer.Tools.PayrollTools.PayrollResultTools">
+            <summary>MCP tools for payroll result value queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.PayrollResultTools.#ctor(PayrollEngine.Client.PayrollHttpClient,PayrollEngine.McpServer.Tools.Isolation.IsolationContext)">
+            <summary>MCP tools for payroll result value queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.PayrollResultTools.ListPayrollResultValuesAsync(System.String,System.String,System.String,System.String,System.Int32)">
+            <summary>List payroll result values for a tenant</summary>
+        </member>
+        <member name="T:PayrollEngine.McpServer.Tools.PeopleTools.CaseChangeQueryTools">
+            <summary>MCP tools for case change queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.CaseChangeQueryTools.#ctor(PayrollEngine.Client.PayrollHttpClient,PayrollEngine.McpServer.Tools.Isolation.IsolationContext)">
+            <summary>MCP tools for case change queries</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.CaseChangeQueryTools.ListEmployeeCaseChangesAsync(System.String,System.String,System.String,System.Int32)">
+            <summary>List all case changes of an employee within a tenant</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.CaseChangeQueryTools.ListCompanyCaseChangesAsync(System.String,System.String,System.Int32)">
+            <summary>List all company case changes within a tenant</summary>
         </member>
         <member name="T:PayrollEngine.McpServer.Tools.PeopleTools.CaseValueQueryTools">
             <summary>MCP tools for case value queries</summary>
@@ -320,6 +350,18 @@
         </member>
         <member name="M:PayrollEngine.McpServer.Tools.ToolBase.CompanyCaseValueService">
             <summary>Creates a new company case value service</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.EmployeeCaseChangeService">
+            <summary>Creates a new employee case change service</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.CompanyCaseChangeService">
+            <summary>Creates a new company case change service</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.PayrollResultValueService">
+            <summary>Creates a new payroll result value service</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.PayrollConsolidatedResultService">
+            <summary>Creates a new payroll consolidated result service</summary>
         </member>
         <member name="M:PayrollEngine.McpServer.Tools.ToolBase.EffectiveTenant(System.String)">
             <summary>Returns the effective tenant identifier, enforcing isolation.

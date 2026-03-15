@@ -136,6 +136,18 @@ public abstract class ToolBase(PayrollHttpClient httpClient, IsolationContext is
     /// <summary>Creates a new company case value service</summary>
     protected CompanyCaseValueService CompanyCaseValueService() => new(HttpClient);
 
+    /// <summary>Creates a new employee case change service</summary>
+    protected EmployeeCaseChangeService EmployeeCaseChangeService() => new(HttpClient);
+
+    /// <summary>Creates a new company case change service</summary>
+    protected CompanyCaseChangeService CompanyCaseChangeService() => new(HttpClient);
+
+    /// <summary>Creates a new payroll result value service</summary>
+    protected PayrollResultValueService PayrollResultValueService() => new(HttpClient);
+
+    /// <summary>Creates a new payroll consolidated result service</summary>
+    protected PayrollConsolidatedResultService PayrollConsolidatedResultService() => new(HttpClient);
+
     #endregion
 
     #region Resolvers — Identifier/Name → object with Id

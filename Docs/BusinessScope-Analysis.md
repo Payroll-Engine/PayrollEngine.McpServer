@@ -134,8 +134,11 @@ permission required to register it.
 | `DivisionQueryTools` | HR | Read |
 | `EmployeeQueryTools` | HR | Read |
 | `CaseValueQueryTools` | HR | Read |
+| `CaseChangeQueryTools` | HR | Read |
 | `RegulationQueryTools` | Regulation | Read |
 | `PayrollQueryTools` | Payroll | Read |
+| `PayrollResultTools` | Payroll | Read |
+| `ConsolidatedResultTools` | Payroll | Read |
 | `CaseValueTimeTools` | Payroll | Read |
 
 Future write tool classes:

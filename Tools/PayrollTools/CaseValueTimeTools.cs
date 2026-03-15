@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using ModelContextProtocol.Server;
 using PayrollEngine.Client;
+using PayrollEngine.Client.Model;
 using PayrollEngine.McpServer.Tools.Isolation;
 
 namespace PayrollEngine.McpServer.Tools.PayrollTools;
@@ -72,12 +73,14 @@ public sealed class CaseValueTimeTools(PayrollHttpClient httpClient, IsolationCo
                 fieldNames = caseFieldNames.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             }
 
-            // resolve optional employeeId
+            // resolve optional employee
             int? employeeId = null;
+            Employee resolvedEmployee = null;
             if (!string.IsNullOrWhiteSpace(employeeIdentifier))
             {
                 var (_, employee) = await ResolveEmployeeAsync(tenantIdentifier, employeeIdentifier);
                 employeeId = employee.Id;
+                resolvedEmployee = employee;
             }
 
             var values = await PayrollService().GetCaseTimeValuesAsync(
@@ -88,6 +91,22 @@ public sealed class CaseValueTimeTools(PayrollHttpClient httpClient, IsolationCo
                 valueDate: parsedValueDate,
                 evaluationDate: parsedEvaluationDate,
                 forecast: string.IsNullOrWhiteSpace(forecast) ? null : forecast);
+
+            // enrich with employee context when scoped to a single employee
+            if (resolvedEmployee != null)
+            {
+                var result = new
+                {
+                    employee = new
+                    {
+                        resolvedEmployee.Identifier,
+                        resolvedEmployee.FirstName,
+                        resolvedEmployee.LastName
+                    },
+                    caseValues = values
+                };
+                return JsonSerializer.Serialize(result);
+            }
 
             return JsonSerializer.Serialize(values);
         }

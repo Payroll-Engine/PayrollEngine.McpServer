@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using ModelContextProtocol.Server;
 using PayrollEngine.Client;
 using PayrollEngine.Client.Model;
+using PayrollEngine.Client.Service;
 using PayrollEngine.McpServer.Tools.Isolation;
 
 namespace PayrollEngine.McpServer.Tools.PeopleTools;
@@ -25,9 +26,20 @@ public sealed class CaseValueQueryTools(PayrollHttpClient httpClient, IsolationC
     {
         try
         {
-            var context = await ResolveEmployeeContextAsync(tenantIdentifier, employeeIdentifier);
-            var values = await EmployeeCaseValueService().QueryAsync<CaseValue>(context);
-            return JsonSerializer.Serialize(values);
+            var (tenantContext, employee) = await ResolveEmployeeAsync(tenantIdentifier, employeeIdentifier);
+            var employeeContext = new EmployeeServiceContext(tenantContext.TenantId, employee.Id);
+            var values = await EmployeeCaseValueService().QueryAsync<CaseValue>(employeeContext);
+            var result = new
+            {
+                employee = new
+                {
+                    employee.Identifier,
+                    employee.FirstName,
+                    employee.LastName
+                },
+                caseValues = values
+            };
+            return JsonSerializer.Serialize(result);
         }
         catch (Exception ex) { return Error(ex); }
     }
