@@ -4,7 +4,7 @@ using PayrollEngine.McpServer.Tools;
 using PayrollEngine.McpServer.Tools.Isolation;
 using PayrollEngine.McpServer.Tools.PayrollTools;
 using PayrollEngine.McpServer.Tools.PeopleTools;
-using PayrollEngine.McpServer.Tools.RegulationTools;
+using PayrollEngine.McpServer.Tools.ReportTools;
 using PayrollEngine.McpServer.Tools.TenantTools;
 using Xunit;
 
@@ -32,13 +32,13 @@ public class ToolRegistrarTest
         typeof(PayrollQueryTools),
         typeof(PayrollResultTools),
         typeof(ConsolidatedResultTools),
-        typeof(CaseValueTimeTools)
+        typeof(PayrollPreviewTools)
     ];
 
-    // Regulation tool classes
-    private static readonly System.Type[] RegulationTools =
+    // Report tool classes
+    private static readonly System.Type[] ReportTools =
     [
-        typeof(RegulationQueryTools)
+        typeof(ReportQueryTools)
     ];
 
     // System tool classes
@@ -65,10 +65,10 @@ public class ToolRegistrarTest
     }
 
     [Fact]
-    public void AllRead_RegistersAllRegulationTools()
+    public void AllRead_RegistersAllReportTools()
     {
         var permitted = ToolRegistrar.GetPermittedTypes(ToolsAssembly, AllRead()).ToList();
-        Assert.All(RegulationTools, t => Assert.Contains(t, permitted));
+        Assert.All(ReportTools, t => Assert.Contains(t, permitted));
     }
 
     [Fact]
@@ -97,10 +97,10 @@ public class ToolRegistrarTest
     }
 
     [Fact]
-    public void AllNone_ExcludesAllRegulationTools()
+    public void AllNone_ExcludesAllReportTools()
     {
         var permitted = ToolRegistrar.GetPermittedTypes(ToolsAssembly, AllNone()).ToList();
-        Assert.All(RegulationTools, t => Assert.DoesNotContain(t, permitted));
+        Assert.All(ReportTools, t => Assert.DoesNotContain(t, permitted));
     }
 
     [Fact]
@@ -122,7 +122,6 @@ public class ToolRegistrarTest
 
         Assert.All(HrTools, t => Assert.DoesNotContain(t, permitted));
         Assert.All(PayrollTools, t => Assert.Contains(t, permitted));
-        Assert.All(RegulationTools, t => Assert.Contains(t, permitted));
         Assert.All(SystemTools, t => Assert.Contains(t, permitted));
     }
 
@@ -134,19 +133,18 @@ public class ToolRegistrarTest
 
         Assert.All(HrTools, t => Assert.Contains(t, permitted));
         Assert.All(PayrollTools, t => Assert.DoesNotContain(t, permitted));
-        Assert.All(RegulationTools, t => Assert.Contains(t, permitted));
         Assert.All(SystemTools, t => Assert.Contains(t, permitted));
     }
 
     [Fact]
-    public void RegulationNone_ExcludesRegulationTools_KeepsOthers()
+    public void ReportNone_ExcludesReportTools_KeepsOthers()
     {
-        var permissions = new McpPermissions { Regulation = McpPermission.None };
+        var permissions = new McpPermissions { Report = McpPermission.None };
         var permitted = ToolRegistrar.GetPermittedTypes(ToolsAssembly, permissions).ToList();
 
         Assert.All(HrTools, t => Assert.Contains(t, permitted));
         Assert.All(PayrollTools, t => Assert.Contains(t, permitted));
-        Assert.All(RegulationTools, t => Assert.DoesNotContain(t, permitted));
+        Assert.All(ReportTools, t => Assert.DoesNotContain(t, permitted));
         Assert.All(SystemTools, t => Assert.Contains(t, permitted));
     }
 
@@ -158,7 +156,7 @@ public class ToolRegistrarTest
 
         Assert.All(HrTools, t => Assert.Contains(t, permitted));
         Assert.All(PayrollTools, t => Assert.Contains(t, permitted));
-        Assert.All(RegulationTools, t => Assert.Contains(t, permitted));
+        Assert.All(ReportTools, t => Assert.Contains(t, permitted));
         Assert.All(SystemTools, t => Assert.DoesNotContain(t, permitted));
     }
 
@@ -173,14 +171,12 @@ public class ToolRegistrarTest
         {
             HR = McpPermission.Read,
             Payroll = McpPermission.None,
-            Regulation = McpPermission.None,
             System = McpPermission.None
         };
         var permitted = ToolRegistrar.GetPermittedTypes(ToolsAssembly, permissions).ToList();
 
         Assert.All(HrTools, t => Assert.Contains(t, permitted));
         Assert.All(PayrollTools, t => Assert.DoesNotContain(t, permitted));
-        Assert.All(RegulationTools, t => Assert.DoesNotContain(t, permitted));
         Assert.All(SystemTools, t => Assert.DoesNotContain(t, permitted));
     }
 
@@ -191,14 +187,12 @@ public class ToolRegistrarTest
         {
             HR = McpPermission.Read,
             Payroll = McpPermission.Read,
-            Regulation = McpPermission.None,
             System = McpPermission.None
         };
         var permitted = ToolRegistrar.GetPermittedTypes(ToolsAssembly, permissions).ToList();
 
         Assert.All(HrTools, t => Assert.Contains(t, permitted));
         Assert.All(PayrollTools, t => Assert.Contains(t, permitted));
-        Assert.All(RegulationTools, t => Assert.DoesNotContain(t, permitted));
         Assert.All(SystemTools, t => Assert.DoesNotContain(t, permitted));
     }
 
@@ -209,14 +203,12 @@ public class ToolRegistrarTest
         {
             HR = McpPermission.None,
             Payroll = McpPermission.None,
-            Regulation = McpPermission.None,
             System = McpPermission.Read
         };
         var permitted = ToolRegistrar.GetPermittedTypes(ToolsAssembly, permissions).ToList();
 
         Assert.All(HrTools, t => Assert.DoesNotContain(t, permitted));
         Assert.All(PayrollTools, t => Assert.DoesNotContain(t, permitted));
-        Assert.All(RegulationTools, t => Assert.DoesNotContain(t, permitted));
         Assert.All(SystemTools, t => Assert.Contains(t, permitted));
     }
 
@@ -227,7 +219,7 @@ public class ToolRegistrarTest
     [Fact]
     public void AllRead_TotalToolCount_Is11()
     {
-        // HR(4) + Payroll(4) + Regulation(1) + System(2) = 11
+        // HR(4) + Payroll(4) + Report(1) + System(2) = 11
         // Update this count whenever a new tool class is added.
         var permitted = ToolRegistrar.GetPermittedTypes(ToolsAssembly, AllRead()).ToList();
         Assert.Equal(11, permitted.Count);
@@ -240,7 +232,6 @@ public class ToolRegistrarTest
         {
             HR = McpPermission.Read,
             Payroll = McpPermission.None,
-            Regulation = McpPermission.None,
             System = McpPermission.None
         };
         var permitted = ToolRegistrar.GetPermittedTypes(ToolsAssembly, permissions).ToList();
@@ -254,7 +245,7 @@ public class ToolRegistrarTest
         {
             HR = McpPermission.None,
             Payroll = McpPermission.Read,
-            Regulation = McpPermission.None,
+            Report = McpPermission.None,
             System = McpPermission.None
         };
         var permitted = ToolRegistrar.GetPermittedTypes(ToolsAssembly, permissions).ToList();
@@ -262,13 +253,13 @@ public class ToolRegistrarTest
     }
 
     [Fact]
-    public void RegulationToolCount_Is1()
+    public void ReportToolCount_Is1()
     {
         var permissions = new McpPermissions
         {
             HR = McpPermission.None,
             Payroll = McpPermission.None,
-            Regulation = McpPermission.Read,
+            Report = McpPermission.Read,
             System = McpPermission.None
         };
         var permitted = ToolRegistrar.GetPermittedTypes(ToolsAssembly, permissions).ToList();
@@ -282,7 +273,7 @@ public class ToolRegistrarTest
         {
             HR = McpPermission.None,
             Payroll = McpPermission.None,
-            Regulation = McpPermission.None,
+            Report = McpPermission.None,
             System = McpPermission.Read
         };
         var permitted = ToolRegistrar.GetPermittedTypes(ToolsAssembly, permissions).ToList();
@@ -297,7 +288,7 @@ public class ToolRegistrarTest
     {
         HR = McpPermission.Read,
         Payroll = McpPermission.Read,
-        Regulation = McpPermission.Read,
+        Report = McpPermission.Read,
         System = McpPermission.Read
     };
 
@@ -305,7 +296,7 @@ public class ToolRegistrarTest
     {
         HR = McpPermission.None,
         Payroll = McpPermission.None,
-        Regulation = McpPermission.None,
+        Report = McpPermission.None,
         System = McpPermission.None
     };
 

@@ -12,8 +12,21 @@
             <summary>Active isolation level. Defaults to MultiTenant.</summary>
         </member>
         <member name="P:PayrollEngine.McpServer.Tools.Isolation.IsolationContext.TenantIdentifier">
-            <summary>Tenant identifier used when Level is Tenant.
+            <summary>Tenant identifier used when Level is Tenant, Division, or Employee.
             All tool calls are automatically scoped to this tenant.</summary>
+        </member>
+        <member name="P:PayrollEngine.McpServer.Tools.Isolation.IsolationContext.DivisionName">
+            <summary>Division name used when Level is Division.
+            All tool calls are automatically scoped to this division within the configured tenant.</summary>
+        </member>
+        <member name="P:PayrollEngine.McpServer.Tools.Isolation.IsolationContext.EmployeeIdentifier">
+            <summary>Employee identifier used when Level is Employee.
+            All tool calls are automatically scoped to this employee within the configured tenant.</summary>
+        </member>
+        <member name="P:PayrollEngine.McpServer.Tools.Isolation.IsolationContext.PreviewUserIdentifier">
+            <summary>User identifier used as the service account for payrun preview invocations.
+            Required when the get_employee_pay_preview tool is used.
+            The user must exist in the target tenant.</summary>
         </member>
         <member name="P:PayrollEngine.McpServer.Tools.Isolation.IsolationContext.Permissions">
             <summary>Role permission levels for this deployment.
@@ -34,10 +47,12 @@
             <summary>Access restricted to a single tenant configured at startup via McpServer:TenantIdentifier.</summary>
         </member>
         <member name="F:PayrollEngine.McpServer.Tools.Isolation.IsolationLevel.Division">
-            <summary>Access restricted to a single division within a tenant. (planned)</summary>
+            <summary>Access restricted to a single division within a tenant.
+            Requires McpServer:TenantIdentifier and McpServer:DivisionName.</summary>
         </member>
         <member name="F:PayrollEngine.McpServer.Tools.Isolation.IsolationLevel.Employee">
-            <summary>Access restricted to a single employee — self-service scenarios. (planned)</summary>
+            <summary>Access restricted to a single employee — self-service scenarios.
+            Requires McpServer:TenantIdentifier and McpServer:EmployeeIdentifier.</summary>
         </member>
         <member name="T:PayrollEngine.McpServer.Tools.Isolation.McpPermission">
             <summary>Access level granted for a role in this MCP Server deployment.
@@ -61,9 +76,6 @@
         </member>
         <member name="P:PayrollEngine.McpServer.Tools.Isolation.McpPermissions.Payroll">
             <summary>Permission for Payroll tools (payrolls, payruns, jobs, temporal queries).</summary>
-        </member>
-        <member name="P:PayrollEngine.McpServer.Tools.Isolation.McpPermissions.Regulation">
-            <summary>Permission for Regulation tools (regulations, wage types, lookups).</summary>
         </member>
         <member name="P:PayrollEngine.McpServer.Tools.Isolation.McpPermissions.System">
             <summary>Permission for System tools (tenant and user queries).</summary>
@@ -90,9 +102,6 @@
             <summary>Payroll execution and result verification:
             payrolls, payruns, payrun jobs, temporal case value queries.</summary>
         </member>
-        <member name="F:PayrollEngine.McpServer.Tools.Isolation.McpRole.Regulation">
-            <summary>Regulation definitions: regulations, wage types, lookups.</summary>
-        </member>
         <member name="F:PayrollEngine.McpServer.Tools.Isolation.McpRole.System">
             <summary>Tenant and user management.</summary>
         </member>
@@ -112,15 +121,6 @@
             <param name="role">The role this tool class belongs to.</param>
             <param name="required">Minimum permission to register. Default: Read.</param>
         </member>
-        <member name="T:PayrollEngine.McpServer.Tools.PayrollTools.CaseValueTimeTools">
-            <summary>MCP tools for time-based case value queries</summary>
-        </member>
-        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.CaseValueTimeTools.#ctor(PayrollEngine.Client.PayrollHttpClient,PayrollEngine.McpServer.Tools.Isolation.IsolationContext)">
-            <summary>MCP tools for time-based case value queries</summary>
-        </member>
-        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.CaseValueTimeTools.GetCaseTimeValuesAsync(System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String)">
-            <summary>Get case values at a specific point in time</summary>
-        </member>
         <member name="T:PayrollEngine.McpServer.Tools.PayrollTools.ConsolidatedResultTools">
             <summary>MCP tools for consolidated payroll result queries</summary>
         </member>
@@ -129,6 +129,15 @@
         </member>
         <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.ConsolidatedResultTools.GetConsolidatedPayrollResultAsync(System.String,System.String,System.String,System.String,System.String)">
             <summary>Get the consolidated payroll result for an employee and period</summary>
+        </member>
+        <member name="T:PayrollEngine.McpServer.Tools.PayrollTools.PayrollPreviewTools">
+            <summary>MCP tools for payrun preview calculations</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.PayrollPreviewTools.#ctor(PayrollEngine.Client.PayrollHttpClient,PayrollEngine.McpServer.Tools.Isolation.IsolationContext)">
+            <summary>MCP tools for payrun preview calculations</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.PayrollPreviewTools.GetEmployeePayPreviewAsync(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>Preview the payroll calculation for a single employee without persisting results</summary>
         </member>
         <member name="T:PayrollEngine.McpServer.Tools.PayrollTools.PayrollQueryTools">
             <summary>MCP tools for payroll, payrun and job queries</summary>
@@ -150,6 +159,12 @@
         </member>
         <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.PayrollQueryTools.ListPayrollWageTypesAsync(System.String,System.String)">
             <summary>List all effective wage types of a payroll merged across all regulation layers</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.PayrollQueryTools.GetPayrollLookupValueAsync(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>Get a single lookup value from a payroll lookup by key</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.PayrollTools.PayrollQueryTools.GetCaseTimeValuesAsync(System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>Get case values at a specific point in time</summary>
         </member>
         <member name="T:PayrollEngine.McpServer.Tools.PayrollTools.PayrollResultTools">
             <summary>MCP tools for payroll result value queries</summary>
@@ -229,26 +244,14 @@
         <member name="M:PayrollEngine.McpServer.Tools.PeopleTools.UserQueryTools.GetUserAttributeAsync(System.String,System.String,System.String)">
             <summary>Get a single attribute value of a user</summary>
         </member>
-        <member name="T:PayrollEngine.McpServer.Tools.RegulationTools.RegulationQueryTools">
-            <summary>MCP tools for regulation queries</summary>
+        <member name="T:PayrollEngine.McpServer.Tools.ReportTools.ReportQueryTools">
+            <summary>MCP tools for payroll report execution</summary>
         </member>
-        <member name="M:PayrollEngine.McpServer.Tools.RegulationTools.RegulationQueryTools.#ctor(PayrollEngine.Client.PayrollHttpClient,PayrollEngine.McpServer.Tools.Isolation.IsolationContext)">
-            <summary>MCP tools for regulation queries</summary>
+        <member name="M:PayrollEngine.McpServer.Tools.ReportTools.ReportQueryTools.#ctor(PayrollEngine.Client.PayrollHttpClient,PayrollEngine.McpServer.Tools.Isolation.IsolationContext)">
+            <summary>MCP tools for payroll report execution</summary>
         </member>
-        <member name="M:PayrollEngine.McpServer.Tools.RegulationTools.RegulationQueryTools.ListRegulationsAsync(System.String)">
-            <summary>List all regulations of a tenant</summary>
-        </member>
-        <member name="M:PayrollEngine.McpServer.Tools.RegulationTools.RegulationQueryTools.GetRegulationAsync(System.String,System.String)">
-            <summary>Get a regulation by name within a tenant</summary>
-        </member>
-        <member name="M:PayrollEngine.McpServer.Tools.RegulationTools.RegulationQueryTools.ListWageTypesAsync(System.String,System.String)">
-            <summary>List all wage types of a regulation within a tenant</summary>
-        </member>
-        <member name="M:PayrollEngine.McpServer.Tools.RegulationTools.RegulationQueryTools.ListLookupsAsync(System.String,System.String)">
-            <summary>List all lookups of a regulation within a tenant</summary>
-        </member>
-        <member name="M:PayrollEngine.McpServer.Tools.RegulationTools.RegulationQueryTools.ListLookupValuesAsync(System.String,System.String,System.String)">
-            <summary>List all values of a lookup within a regulation</summary>
+        <member name="M:PayrollEngine.McpServer.Tools.ReportTools.ReportQueryTools.ExecutePayrollReportAsync(System.String,System.String,System.String,System.Collections.Generic.Dictionary{System.String,System.String},System.String)">
+            <summary>Execute a payroll report and return the result data set</summary>
         </member>
         <member name="T:PayrollEngine.McpServer.Tools.TenantTools.TenantQueryTools">
             <summary>MCP tools for tenant queries</summary>
@@ -301,6 +304,16 @@
         <member name="M:PayrollEngine.McpServer.Tools.ToolBase.IsolatedTenantQuery">
             <summary>Builds a tenant-scoped active query.
             In Tenant isolation mode, adds an identifier filter so list_tenants only returns the configured tenant.</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.IsolatedDivisionQuery">
+            <summary>Builds a division-scoped active query.
+            In Division isolation mode, adds a name filter so list_divisions only returns the configured division.
+            In Employee isolation mode, divisions remain fully visible.</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.IsolatedEmployeeQuery(System.String,System.Nullable{System.Int32})">
+            <summary>Builds an employee-scoped active DivisionQuery.
+            In Employee isolation mode, adds an identifier filter so list_employees only returns the configured employee.
+            In Division isolation mode, adds a division filter limiting employees to the configured division.</summary>
         </member>
         <member name="M:PayrollEngine.McpServer.Tools.ToolBase.Error(System.Exception)">
             <summary>Serializes a caught exception as a structured JSON error result.
@@ -360,13 +373,15 @@
         <member name="M:PayrollEngine.McpServer.Tools.ToolBase.PayrollResultValueService">
             <summary>Creates a new payroll result value service</summary>
         </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.ReportService">
+            <summary>Creates a new report service</summary>
+        </member>
         <member name="M:PayrollEngine.McpServer.Tools.ToolBase.PayrollConsolidatedResultService">
             <summary>Creates a new payroll consolidated result service</summary>
         </member>
         <member name="M:PayrollEngine.McpServer.Tools.ToolBase.EffectiveTenant(System.String)">
             <summary>Returns the effective tenant identifier, enforcing isolation.
-            In Tenant mode the configured identifier overrides whatever the AI agent passed.
-            Division and Employee levels are not yet supported and throw NotSupportedException.</summary>
+            In Tenant, Division, and Employee modes the configured identifier overrides whatever the AI agent passed.</summary>
             <param name="tenantIdentifier">Identifier provided by the AI agent</param>
         </member>
         <member name="M:PayrollEngine.McpServer.Tools.ToolBase.ResolveTenantAsync(System.String)">
@@ -398,6 +413,10 @@
         </member>
         <member name="M:PayrollEngine.McpServer.Tools.ToolBase.ResolvePayrollContextAsync(System.String,System.String)">
             <summary>Resolves a PayrollServiceContext by tenant identifier and payroll name</summary>
+        </member>
+        <member name="M:PayrollEngine.McpServer.Tools.ToolBase.ResolveReportAsync(PayrollEngine.Client.Service.PayrollServiceContext,System.String)">
+            <summary>Resolves a ReportSet by payroll context and report name.
+            Returns the topmost derived report across all regulation layers.</summary>
         </member>
         <member name="T:PayrollEngine.McpServer.Tools.ToolRegistrar">
             <summary>Filters and registers MCP tool classes based on the active McpPermissions.

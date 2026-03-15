@@ -10,9 +10,11 @@ public enum IsolationLevel
     /// <summary>Access restricted to a single tenant configured at startup via McpServer:TenantIdentifier.</summary>
     Tenant,
 
-    /// <summary>Access restricted to a single division within a tenant. (planned)</summary>
-    Division,  // planned
+    /// <summary>Access restricted to a single division within a tenant.
+    /// Requires McpServer:TenantIdentifier and McpServer:DivisionName.</summary>
+    Division,
 
-    /// <summary>Access restricted to a single employee — self-service scenarios. (planned)</summary>
-    Employee   // planned
+    /// <summary>Access restricted to a single employee — self-service scenarios.
+    /// Requires McpServer:TenantIdentifier and McpServer:EmployeeIdentifier.</summary>
+    Employee
 }

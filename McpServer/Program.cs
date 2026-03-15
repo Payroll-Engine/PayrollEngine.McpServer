@@ -122,6 +122,9 @@ sealed class Program
         {
             Level = level,
             TenantIdentifier = builder.Configuration["McpServer:TenantIdentifier"],
+            DivisionName = builder.Configuration["McpServer:DivisionName"],
+            EmployeeIdentifier = builder.Configuration["McpServer:EmployeeIdentifier"],
+            PreviewUserIdentifier = builder.Configuration["McpServer:PreviewUserIdentifier"],
             Permissions = McpPermissions.FromConfiguration(builder.Configuration)
         };
     }

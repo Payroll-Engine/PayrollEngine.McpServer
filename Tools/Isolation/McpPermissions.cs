@@ -15,8 +15,8 @@ public sealed class McpPermissions
     /// <summary>Permission for Payroll tools (payrolls, payruns, jobs, temporal queries).</summary>
     public McpPermission Payroll { get; init; } = McpPermission.Read;
 
-    /// <summary>Permission for Regulation tools (regulations, wage types, lookups).</summary>
-    public McpPermission Regulation { get; init; } = McpPermission.Read;
+    /// <summary>Permission for Report tools (payroll report execution).</summary>
+    public McpPermission Report { get; init; } = McpPermission.Read;
 
     /// <summary>Permission for System tools (tenant and user queries).</summary>
     public McpPermission System { get; init; } = McpPermission.Read;
@@ -24,10 +24,10 @@ public sealed class McpPermissions
     /// <summary>Returns the permission granted for the given role.</summary>
     private McpPermission GetPermission(McpRole role) => role switch
     {
-        McpRole.HR         => HR,
-        McpRole.Payroll    => Payroll,
-        McpRole.Regulation => Regulation,
-        McpRole.System     => System,
+        McpRole.HR      => HR,
+        McpRole.Payroll => Payroll,
+        McpRole.Report  => Report,
+        McpRole.System  => System,
         _ => throw new ArgumentOutOfRangeException(nameof(role), role, null)
     };
 
@@ -45,10 +45,10 @@ public sealed class McpPermissions
 
         return new McpPermissions
         {
-            HR         = ParsePermission(section["HR"]),
-            Payroll    = ParsePermission(section["Payroll"]),
-            Regulation = ParsePermission(section["Regulation"]),
-            System     = ParsePermission(section["System"])
+            HR      = ParsePermission(section["HR"]),
+            Payroll = ParsePermission(section["Payroll"]),
+            Report  = ParsePermission(section["Report"]),
+            System  = ParsePermission(section["System"])
         };
     }
 

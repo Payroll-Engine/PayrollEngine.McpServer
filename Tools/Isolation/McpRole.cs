@@ -12,8 +12,8 @@ public enum McpRole
     /// payrolls, payruns, payrun jobs, temporal case value queries.</summary>
     Payroll,
 
-    /// <summary>Regulation definitions: regulations, wage types, lookups.</summary>
-    Regulation,
+    /// <summary>Payroll report execution and result analysis.</summary>
+    Report,
 
     /// <summary>Tenant and user management.</summary>
     System

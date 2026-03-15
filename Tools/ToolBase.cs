@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using PayrollEngine.Client;
@@ -20,7 +21,7 @@ public abstract class ToolBase(PayrollHttpClient httpClient, IsolationContext is
     private PayrollHttpClient HttpClient { get; } = httpClient;
 
     /// <summary>The active data isolation context. Every tool call is filtered through this context.</summary>
-    private IsolationContext Isolation { get; } = isolation;
+    protected IsolationContext Isolation { get; } = isolation;
 
     #region Query helpers
 
@@ -72,6 +73,41 @@ public abstract class ToolBase(PayrollHttpClient httpClient, IsolationContext is
             return ActiveQuery($"identifier eq '{Isolation.TenantIdentifier}'");
         }
         return ActiveQuery();
+    }
+
+    /// <summary>Builds a division-scoped active query.
+    /// In Division isolation mode, adds a name filter so list_divisions only returns the configured division.
+    /// In Employee isolation mode, divisions remain fully visible.</summary>
+    protected Query IsolatedDivisionQuery()
+    {
+        if (Isolation.Level == IsolationLevel.Division &&
+            !string.IsNullOrWhiteSpace(Isolation.DivisionName))
+        {
+            return ActiveQuery($"name eq '{Isolation.DivisionName}'");
+        }
+        return ActiveQuery();
+    }
+
+    /// <summary>Builds an employee-scoped active DivisionQuery.
+    /// In Employee isolation mode, adds an identifier filter so list_employees only returns the configured employee.
+    /// In Division isolation mode, adds a division filter limiting employees to the configured division.</summary>
+    protected DivisionQuery IsolatedEmployeeQuery(string userFilter = null, int? top = null)
+    {
+        if (Isolation.Level == IsolationLevel.Employee &&
+            !string.IsNullOrWhiteSpace(Isolation.EmployeeIdentifier))
+        {
+            return ActiveDivisionQuery($"identifier eq '{Isolation.EmployeeIdentifier}'", top);
+        }
+        if (Isolation.Level == IsolationLevel.Division &&
+            !string.IsNullOrWhiteSpace(Isolation.DivisionName))
+        {
+            var divisionFilter = $"divisions/any(d: d eq '{Isolation.DivisionName}')";
+            var combinedFilter = string.IsNullOrWhiteSpace(userFilter)
+                ? divisionFilter
+                : $"{divisionFilter} and ({userFilter})";
+            return ActiveDivisionQuery(combinedFilter, top);
+        }
+        return ActiveDivisionQuery(userFilter, top);
     }
 
     #endregion
@@ -145,6 +181,9 @@ public abstract class ToolBase(PayrollHttpClient httpClient, IsolationContext is
     /// <summary>Creates a new payroll result value service</summary>
     protected PayrollResultValueService PayrollResultValueService() => new(HttpClient);
 
+    /// <summary>Creates a new report service</summary>
+    protected ReportService ReportService() => new(HttpClient);
+
     /// <summary>Creates a new payroll consolidated result service</summary>
     protected PayrollConsolidatedResultService PayrollConsolidatedResultService() => new(HttpClient);
 
@@ -153,15 +192,15 @@ public abstract class ToolBase(PayrollHttpClient httpClient, IsolationContext is
     #region Resolvers — Identifier/Name → object with Id
 
     /// <summary>Returns the effective tenant identifier, enforcing isolation.
-    /// In Tenant mode the configured identifier overrides whatever the AI agent passed.
-    /// Division and Employee levels are not yet supported and throw NotSupportedException.</summary>
+    /// In Tenant, Division, and Employee modes the configured identifier overrides whatever the AI agent passed.</summary>
     /// <param name="tenantIdentifier">Identifier provided by the AI agent</param>
     private string EffectiveTenant(string tenantIdentifier) => Isolation.Level switch
     {
         IsolationLevel.MultiTenant => tenantIdentifier,
         IsolationLevel.Tenant      => Isolation.TenantIdentifier,
-        _                          => throw new NotSupportedException(
-            $"Isolation level '{Isolation.Level}' is architecturally reserved and will be available in a future release.")
+        IsolationLevel.Division    => Isolation.TenantIdentifier,
+        IsolationLevel.Employee    => Isolation.TenantIdentifier,
+        _                          => throw new ArgumentOutOfRangeException(nameof(Isolation.Level), Isolation.Level, null)
     };
 
     private static readonly RootServiceContext RootContext = new();
@@ -285,6 +324,22 @@ public abstract class ToolBase(PayrollHttpClient httpClient, IsolationContext is
                 $"Payroll '{payrollName}' not found in tenant '{tenantIdentifier}'.");
         }
         return new PayrollServiceContext(tenantContext.TenantId, payroll.Id);
+    }
+
+    /// <summary>Resolves a ReportSet by payroll context and report name.
+    /// Returns the topmost derived report across all regulation layers.</summary>
+    protected async Task<(RegulationServiceContext Context, ReportSet Report)> ResolveReportAsync(
+        PayrollServiceContext payrollContext, string reportName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(reportName);
+        var reports = await PayrollService().GetReportsAsync<ReportSet>(
+            payrollContext, reportNames: [reportName]);
+        var report = reports?.FirstOrDefault();
+        if (report == null)
+        {
+            throw new InvalidOperationException($"Report '{reportName}' not found.");
+        }
+        return (new RegulationServiceContext(payrollContext.TenantId, report.RegulationId), report);
     }
 
     #endregion

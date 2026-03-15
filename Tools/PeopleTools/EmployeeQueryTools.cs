@@ -28,7 +28,7 @@ public sealed class EmployeeQueryTools(PayrollHttpClient httpClient, IsolationCo
         try
         {
             var context = await ResolveTenantContextAsync(tenantIdentifier);
-            var query = ActiveDivisionQuery(filter, top > 0 ? top : null);
+            var query = IsolatedEmployeeQuery(filter, top > 0 ? top : null);
             var employees = await EmployeeService().QueryAsync<Employee>(context, query);
             return JsonSerializer.Serialize(employees);
         }

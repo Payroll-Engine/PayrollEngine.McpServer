@@ -23,7 +23,7 @@ public sealed class DivisionQueryTools(PayrollHttpClient httpClient, IsolationCo
         try
         {
             var context = await ResolveTenantContextAsync(tenantIdentifier);
-            var divisions = await DivisionService().QueryAsync<Division>(context, ActiveQuery());
+            var divisions = await DivisionService().QueryAsync<Division>(context, IsolatedDivisionQuery());
             return JsonSerializer.Serialize(divisions);
         }
         catch (Exception ex) { return Error(ex); }

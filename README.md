@@ -2,7 +2,7 @@
 
 MCP (Model Context Protocol) server for the [Payroll Engine](https://payrollengine.org) — enables AI agents to query and analyse payroll data using natural language.
 
-The MCP Server is **read-only by design**. It is an information and analysis tool; no mutation operations are exposed. This ensures that payroll data can never be modified through an AI agent, regardless of configuration.
+The MCP Server is **read-only by design**. It is an information and analysis tool; write operations are not exposed — with two exceptions: `get_employee_pay_preview` and `execute_payroll_report` execute synchronous calculations that return results without persisting anything to the database.
 
 ## Overview
 
@@ -27,8 +27,8 @@ Controls **which records** are returned at runtime. A Tenant-isolated server phy
 |:------|:------------|
 | `MultiTenant` | Full access across all tenants (default) |
 | `Tenant` | All tool calls scoped to a single tenant |
-| `Division` | Scoped to a single division within a tenant *(planned)* |
-| `Employee` | Self-service — single employee access *(planned)* |
+| `Division` | Scoped to a single division within a tenant. Requires `TenantIdentifier` and `DivisionName`. |
+| `Employee` | Self-service — single employee access. Requires `TenantIdentifier` and `EmployeeIdentifier`. |
 
 ## Roles
 
@@ -37,8 +37,8 @@ Controls **which tools** are registered at startup. Each tool belongs to exactly
 | Value | Domain |
 |:------|:-------|
 | `HR` | Employee master data, case values, and audit trail |
-| `Payroll` | Payroll execution, results, and temporal case value queries |
-| `Regulation` | Regulation definitions: wage types and lookups |
+| `Payroll` | Payroll execution, results, preview calculations, temporal case value queries, and lookup resolution |
+| `Report` | Payroll report execution and result analysis |
 | `System` | Tenant and user management |
 
 ### HR — Human Resources
@@ -76,7 +76,7 @@ Case changes are the audit trail of data mutations: each change records who made
 
 ### Payroll — Payroll Processing
 
-Payroll execution and result analysis: payroll structure, payruns, payrun jobs, result values, and temporal case value queries. A Payroll Specialist who needs to look up employees requires `HR: Read` in addition.
+Payroll execution and result analysis: payroll structure, payruns, payrun jobs, result values, preview calculations, temporal case value queries, and lookup resolution. A Payroll Specialist who needs to look up employees requires `HR: Read` in addition.
 
 #### Structure
 
@@ -86,7 +86,8 @@ Payroll execution and result analysis: payroll structure, payruns, payrun jobs, 
 | `get_payroll` | Get a payroll by name |
 | `list_payruns` | List all payruns of a tenant |
 | `list_payrun_jobs` | List all payrun jobs, ordered by creation date descending. Includes period, status, employee count, and job timing. Result contains a `divisions` lookup (id → name) alongside the `payrunJobs` array. |
-| `list_payroll_wage_types` | Effective wage types of a payroll, merged across all regulation layers. Distinct from `list_wage_types` (Regulation), which returns raw definitions within a single regulation. |
+| `list_payroll_wage_types` | Effective wage types of a payroll, merged across all regulation layers. |
+| `get_payroll_lookup_value` | Resolved lookup value for a given key or range value, merged across all regulation layers. Use `lookupKey` for exact-key lookups and `rangeValue` for progressive lookups (e.g. income bracket). |
 
 #### Results
 
@@ -96,6 +97,12 @@ Payroll results reflect what was calculated during payrun execution. Two complem
 |:-----|:------------|
 | `list_payroll_result_values` | Flat list of all result values (wage types and collectors). Fully denormalized — each row includes `employeeIdentifier`, `payrollName`, `periodName`, `payrunName`, and `jobName`. Supports optional filter by employee or payroll, plus OData filter. Use for cross-employee or cross-period analysis. |
 | `get_consolidated_payroll_result` | All wage type results, collector results, and payrun results for one employee and one period in a single response. Use for a complete per-employee per-period overview. Result includes employee context and period boundaries. |
+
+#### Preview
+
+| Tool | Description |
+|:-----|:------------|
+| `get_employee_pay_preview` | Preview the payroll calculation for a single employee without persisting results. Returns wage type results, collector results, and payrun results. Requires `McpServer:PreviewUserIdentifier` to be configured. |
 
 #### Temporal Case Values
 
@@ -109,17 +116,13 @@ Payroll results reflect what was calculated during payrun execution. Two complem
 |:-----|:------------|
 | `get_case_time_values` | Case values valid at a specific point in time. Supports `Employee`, `Company`, and `Global` case types. When scoped to a single employee via `employeeIdentifier`, result includes employee context. |
 
-### Regulation — Regulation Design and Verification
+### Report — Report Execution
 
-Payroll rule definitions: regulations, wage type definitions, and lookup tables.
+Payroll report execution and result analysis. Reports are resolved across all regulation layers of the payroll and return one or more named result tables. Requires `McpServer:PreviewUserIdentifier` to be configured.
 
 | Tool | Description |
 |:-----|:------------|
-| `list_regulations` | List all regulations of a tenant |
-| `get_regulation` | Get a regulation by name |
-| `list_wage_types` | Wage type definitions within a single regulation (raw, not merged). Distinct from `list_payroll_wage_types` (Payroll), which returns the effective merged result. |
-| `list_lookups` | All lookups of a regulation |
-| `list_lookup_values` | All values of a specific lookup, with key-value pairs and optional range and culture support. |
+| `execute_payroll_report` | Execute a payroll report and return its result data set. The report is resolved across all regulation layers of the payroll. Use the `parameters` dictionary to pass report-specific input values (e.g. period, employee filter). |
 
 ### System — Administration
 
@@ -148,22 +151,22 @@ Each role is independently enabled or disabled per deployment.
 `✓` = permission can be assigned (`None` / `Read`)  
 `✗` = not applicable at this isolation level
 
-| Role | MultiTenant | Tenant | Division *(planned)* | Employee *(planned)* |
-|:-----|:-----------:|:------:|:--------------------:|:--------------------:|
+| Role | MultiTenant | Tenant | Division | Employee |
+|:-----|:-----------:|:------:|:--------:|:--------:|
 | **HR** | ✓ | ✓ | ✓ | ✓ |
 | **Payroll** | ✓ | ✓ | ✓ | ✗ |
-| **Regulation** | ✓ | ✓ | ✗ | ✗ |
+| **Report** | ✓ | ✓ | ✗ | ✗ |
 | **System** | ✓ | ✓ | ✗ | ✗ |
 
 ### Persona Examples
 
-| Persona | HR | Payroll | Regulation | System |
-|:--------|:--:|:-------:|:----------:|:------:|
+| Persona | HR | Payroll | Report | System |
+|:--------|:--:|:-------:|:------:|:------:|
 | HR Manager | Read | None | None | None |
 | Payroll Specialist | Read | Read | None | None |
 | HR Business Partner | Read | Read | None | None |
-| Regulation Developer | Read | Read | Read | None |
-| Controller / Analyst | Read | Read | None | None |
+| Controller / Analyst | Read | Read | Read | None |
+| Report Analyst | None | None | Read | None |
 | System Administrator | None | None | None | Read |
 | Developer | Read | Read | Read | Read |
 
@@ -206,11 +209,45 @@ IsolationLevel and role permissions in `appsettings.json`:
     "IsolationLevel": "Tenant",
     "TenantIdentifier": "acme-corp",
     "Permissions": {
-      "HR":         "Read",
-      "Payroll":    "Read",
-      "Regulation": "None",
-      "System":     "None"
+      "HR":      "Read",
+      "Payroll": "Read",
+      "Report":  "Read",
+      "System":  "None"
     }
+  }
+}
+```
+
+For Division isolation:
+
+```json
+{
+  "McpServer": {
+    "IsolationLevel": "Division",
+    "TenantIdentifier": "acme-corp",
+    "DivisionName": "sales"
+  }
+}
+```
+
+For Employee isolation:
+
+```json
+{
+  "McpServer": {
+    "IsolationLevel": "Employee",
+    "TenantIdentifier": "acme-corp",
+    "EmployeeIdentifier": "mario.nunez@acme.com"
+  }
+}
+```
+
+For payrun preview and report execution (`get_employee_pay_preview`, `execute_payroll_report`), configure a service account user that exists in the target tenant:
+
+```json
+{
+  "McpServer": {
+    "PreviewUserIdentifier": "mcp-service@acme.com"
   }
 }
 ```
@@ -220,9 +257,12 @@ All settings can also be provided as environment variables using the `__` separa
 ```
 McpServer__IsolationLevel=Tenant
 McpServer__TenantIdentifier=acme-corp
+McpServer__DivisionName=sales
+McpServer__EmployeeIdentifier=mario.nunez@acme.com
+McpServer__PreviewUserIdentifier=mcp-service@acme.com
 McpServer__Permissions__HR=Read
 McpServer__Permissions__Payroll=Read
-McpServer__Permissions__Regulation=None
+McpServer__Permissions__Report=Read
 McpServer__Permissions__System=None
 ApiSettings__BaseUrl=https://your-backend
 ApiSettings__Port=443
@@ -272,10 +312,12 @@ List all tenants
 Show me the employees of StartTenant
 What case values does mario.nunez@foo.com have in StartTenant?
 What changed in the employee data of mario.nunez@foo.com in January 2026?
-List the lookup values of VatRates in SwissRegulation of CH.Swissdec
 What wage types are effective in the CH-Monthly payroll of CH.Swissdec?
 What was the salary of all employees as of Dec 31, 2024?
 Show me all payroll results for Müller in March 2026
+What is the tax rate for an income of 85000 in the TaxRates lookup?
+What would the payroll look like for Müller in April 2026?
+Run the MonthlyPayslip report for the CH-Monthly payroll
 ```
 
 ## License
