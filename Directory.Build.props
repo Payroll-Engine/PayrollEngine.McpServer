@@ -1,13 +1,13 @@
-﻿<Project>
+<Project>
 
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
-		<Version>0.1-preview</Version>
-		<FileVersion>0.1.0</FileVersion>
+		<Version>0.10.0-beta.1</Version>
+		<FileVersion>0.10.0</FileVersion>
 		<InformationalVersion></InformationalVersion>
 		<Authors>Jani Giannoudis</Authors>
 		<Company>Software Consulting Giannoudis</Company>
-		<Copyright>Â© 2026 Software Consulting Giannoudis</Copyright>
+		<Copyright>© 2026 Software Consulting Giannoudis</Copyright>
 		<Product>Payroll Engine MCP Server</Product>
 		<PackageProjectUrl>https://payrollengine.org/</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Payroll-Engine/PayrollEngine.McpServer.git</RepositoryUrl>
