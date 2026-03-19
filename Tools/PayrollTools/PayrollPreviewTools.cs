@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -34,24 +35,29 @@ public sealed class PayrollPreviewTools(PayrollHttpClient httpClient, IsolationC
         {
             // validate PreviewUserIdentifier is configured
             if (string.IsNullOrWhiteSpace(Isolation.PreviewUserIdentifier))
+            {
                 return JsonSerializer.Serialize(new
                 {
                     error = "McpServer:PreviewUserIdentifier is not configured. " +
                             "Set a service account user identifier in appsettings.json to use this tool.",
                     type = nameof(InvalidOperationException)
                 });
+            }
 
             // parse period start
-            if (!DateTime.TryParse(periodStart, out var parsedPeriodStart))
+            if (!DateTime.TryParse(periodStart, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedPeriodStart))
+            {
                 return JsonSerializer.Serialize(new
                 {
                     error = $"Invalid periodStart '{periodStart}'. Use ISO 8601 format, e.g. '2026-04-01'.",
                     type = nameof(FormatException)
                 });
+            }
 
             // resolve tenant and employee
             var tenantContext = await ResolveTenantContextAsync(tenantIdentifier);
             var (_, employee) = await ResolveEmployeeAsync(tenantIdentifier, employeeIdentifier);
+            AssertEmployeeInDivision(employee);
 
             var invocation = new PayrunJobInvocation
             {

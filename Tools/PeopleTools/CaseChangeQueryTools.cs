@@ -32,6 +32,7 @@ public sealed class CaseChangeQueryTools(PayrollHttpClient httpClient, Isolation
         try
         {
             var (tenantContext, employee) = await ResolveEmployeeAsync(tenantIdentifier, employeeIdentifier);
+            AssertEmployeeInDivision(employee);
             var employeeContext = new EmployeeServiceContext(tenantContext.TenantId, employee.Id);
 
             var query = new CaseChangeQuery

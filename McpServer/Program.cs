@@ -36,6 +36,7 @@ sealed class Program
             // isolation context — reads McpServer:IsolationLevel, TenantIdentifier, and Permissions
             var isolationContext = BuildIsolationContext(builder);
             isolationContext.Validate();
+            LogIsolationContext(isolationContext);
 
             // MCP server with stdio transport and permission-filtered tool registration
             var mcpBuilder = builder.Services
@@ -44,7 +45,7 @@ sealed class Program
                 .AddMcpServer()
                 .WithStdioServerTransport();
 
-            RegisterPermittedTools(mcpBuilder, isolationContext.Permissions);
+            RegisterPermittedTools(mcpBuilder, isolationContext.Permissions, isolationContext.Level);
 
             await builder.Build().RunAsync();
         }
@@ -57,13 +58,14 @@ sealed class Program
         }
     }
 
+    // ReSharper disable once GrammarMistakeInComment
     /// <summary>Registers only the tool classes permitted by the active McpPermissions.
     /// Uses the WithTools&lt;T&gt;() extension method from the MCP SDK via reflection
     /// to support dynamic type-based registration.</summary>
-    private static void RegisterPermittedTools(IMcpServerBuilder mcpBuilder, McpPermissions permissions)
+    private static void RegisterPermittedTools(IMcpServerBuilder mcpBuilder, McpPermissions permissions, IsolationLevel isolationLevel)
     {
         var toolsAssembly = typeof(ToolsMarker).Assembly;
-        var permittedTypes = ToolRegistrar.GetPermittedTypes(toolsAssembly, permissions).ToList();
+        var permittedTypes = ToolRegistrar.GetPermittedTypes(toolsAssembly, permissions, isolationLevel).ToList();
 
         // Locate WithTools<T>(IMcpServerBuilder) in the MCP SDK via reflection.
         // Searches both the main assembly and ModelContextProtocol.Core for the generic overload.
@@ -72,7 +74,7 @@ sealed class Program
             typeof(IMcpServerBuilder).Assembly,
             AppDomain.CurrentDomain.GetAssemblies()
                 .FirstOrDefault(a => a.GetName().Name == "ModelContextProtocol.Core")
-        }.Where(a => a != null);
+        }.Where(a => a != null).ToArray();
 
         var withToolsMethod = searchAssemblies
             .SelectMany(a => a.GetTypes())
@@ -104,7 +106,9 @@ sealed class Program
             var invokeArgs = new object[paramCount];
             invokeArgs[0] = mcpBuilder;
             for (var i = 1; i < paramCount; i++)
+            {
                 invokeArgs[i] = Type.Missing;
+            }
             withToolsMethod.MakeGenericMethod(type).Invoke(null, invokeArgs);
         }
 
@@ -163,5 +167,19 @@ sealed class Program
         }
 
         return client;
+    }
+
+    private static void LogIsolationContext(IsolationContext isolation)
+    {
+        var level = isolation.Level.ToString();
+        var detail = isolation.Level switch
+        {
+            IsolationLevel.MultiTenant => "full access across all tenants",
+            IsolationLevel.Tenant      => $"tenant: {isolation.TenantIdentifier}",
+            IsolationLevel.Division    => $"tenant: {isolation.TenantIdentifier}, division: {isolation.DivisionName}",
+            IsolationLevel.Employee    => $"tenant: {isolation.TenantIdentifier}, employee: {isolation.EmployeeIdentifier}",
+            _                          => "unknown"
+        };
+        Log.Information($"Isolation: {level} ({detail})");
     }
 }

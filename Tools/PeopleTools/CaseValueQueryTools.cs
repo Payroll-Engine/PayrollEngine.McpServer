@@ -27,6 +27,7 @@ public sealed class CaseValueQueryTools(PayrollHttpClient httpClient, IsolationC
         try
         {
             var (tenantContext, employee) = await ResolveEmployeeAsync(tenantIdentifier, employeeIdentifier);
+            AssertEmployeeInDivision(employee);
             var employeeContext = new EmployeeServiceContext(tenantContext.TenantId, employee.Id);
             var values = await EmployeeCaseValueService().QueryAsync<CaseValue>(employeeContext);
             var result = new

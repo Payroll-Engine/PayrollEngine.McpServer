@@ -37,7 +37,9 @@ public sealed class TenantQueryTools(PayrollHttpClient httpClient, IsolationCont
     {
         try
         {
-            var tenant = await TenantService().GetAsync<Tenant>(Context, identifier);
+            // Route through ResolveTenantAsync to enforce isolation (EffectiveTenant override).
+            // Direct TenantService.GetAsync bypasses isolation and must not be used here.
+            var tenant = await ResolveTenantAsync(identifier);
             return JsonSerializer.Serialize(tenant);
         }
         catch (Exception ex) { return Error(ex); }

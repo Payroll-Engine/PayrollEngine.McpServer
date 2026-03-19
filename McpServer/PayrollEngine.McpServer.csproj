@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
@@ -10,8 +10,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="ModelContextProtocol" Version="0.2.0-preview.3" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0-preview.3.25171.5" />
+		<PackageReference Include="ModelContextProtocol" Version="1.1.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.5" />
 		<PackageReference Include="PayrollEngine.Client.Core" Version="0.10.0-beta.dev" />
 		<PackageReference Include="PayrollEngine.Serilog" Version="0.10.0-beta.dev" />
 		<PackageReference Include="Serilog.Settings.Configuration" Version="10.0.0" />

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -27,7 +28,7 @@ public sealed class PayrollQueryTools(PayrollHttpClient httpClient, IsolationCon
         try
         {
             var context = await ResolveTenantContextAsync(tenantIdentifier);
-            var payrolls = await PayrollService().QueryAsync<Payroll>(context, ActiveQuery());
+            var payrolls = await PayrollService().QueryAsync<Payroll>(context, await IsolatedPayrollQueryAsync(tenantIdentifier));
             return JsonSerializer.Serialize(payrolls);
         }
         catch (Exception ex) { return Error(ex); }
@@ -43,6 +44,15 @@ public sealed class PayrollQueryTools(PayrollHttpClient httpClient, IsolationCon
         {
             var context = await ResolveTenantContextAsync(tenantIdentifier);
             var payroll = await PayrollService().GetAsync<Payroll>(context, payrollName);
+            // Division isolation: guard — only payrolls of the configured division are accessible
+            if (Isolation.Level == IsolationLevel.Division)
+            {
+                var divisionId = await ResolveIsolatedDivisionIdAsync(tenantIdentifier);
+                if (!divisionId.HasValue || payroll?.DivisionId != divisionId.Value)
+                {
+                    throw new InvalidOperationException($"Access denied: payroll '{payrollName}' is not in division '{Isolation.DivisionName}'.");
+                }
+            }
             return JsonSerializer.Serialize(payroll);
         }
         catch (Exception ex) { return Error(ex); }
@@ -56,7 +66,7 @@ public sealed class PayrollQueryTools(PayrollHttpClient httpClient, IsolationCon
         try
         {
             var context = await ResolveTenantContextAsync(tenantIdentifier);
-            var payruns = await PayrunService().QueryAsync<Payrun>(context, ActiveQuery());
+            var payruns = await PayrunService().QueryAsync<Payrun>(context, await IsolatedPayrunQueryAsync(tenantIdentifier));
             return JsonSerializer.Serialize(payruns);
         }
         catch (Exception ex) { return Error(ex); }
@@ -71,7 +81,8 @@ public sealed class PayrollQueryTools(PayrollHttpClient httpClient, IsolationCon
         try
         {
             var context = await ResolveTenantContextAsync(tenantIdentifier);
-            var query = ActiveQuery(orderBy: "created desc");
+            var query = await IsolatedPayrunQueryAsync(tenantIdentifier);
+            query.OrderBy = "created desc";
             var jobs = await PayrunJobService().QueryAsync<PayrunJob>(context, query);
 
             // resolve distinct division names
@@ -80,7 +91,9 @@ public sealed class PayrollQueryTools(PayrollHttpClient httpClient, IsolationCon
             {
                 var division = await DivisionService().GetAsync<Division>(context, divisionId);
                 if (division != null)
+                {
                     divisionNames[divisionId] = division.Name;
+                }
             }
 
             var result = new
@@ -106,6 +119,17 @@ public sealed class PayrollQueryTools(PayrollHttpClient httpClient, IsolationCon
     {
         try
         {
+            // Division isolation: guard — only payrolls of the configured division are accessible
+            if (Isolation.Level == IsolationLevel.Division)
+            {
+                var ctx = await ResolveTenantContextAsync(tenantIdentifier);
+                var p = await PayrollService().GetAsync<Payroll>(ctx, payrollName);
+                var divisionId = await ResolveIsolatedDivisionIdAsync(tenantIdentifier);
+                if (!divisionId.HasValue || p?.DivisionId != divisionId.Value)
+                {
+                    throw new InvalidOperationException($"Access denied: payroll '{payrollName}' is not in division '{Isolation.DivisionName}'.");
+                }
+            }
             var context = await ResolvePayrollContextAsync(tenantIdentifier, payrollName);
             var wageTypes = await PayrollService().GetWageTypesAsync<WageType>(context);
             return JsonSerializer.Serialize(wageTypes);
@@ -129,16 +153,29 @@ public sealed class PayrollQueryTools(PayrollHttpClient httpClient, IsolationCon
     {
         try
         {
+            // Division isolation: guard — only payrolls of the configured division are accessible
+            if (Isolation.Level == IsolationLevel.Division)
+            {
+                var ctx = await ResolveTenantContextAsync(tenantIdentifier);
+                var p = await PayrollService().GetAsync<Payroll>(ctx, payrollName);
+                var divisionId = await ResolveIsolatedDivisionIdAsync(tenantIdentifier);
+                if (!divisionId.HasValue || p?.DivisionId != divisionId.Value)
+                {
+                    throw new InvalidOperationException($"Access denied: payroll '{payrollName}' is not in division '{Isolation.DivisionName}'.");
+                }
+            }
+
             decimal? parsedRangeValue = null;
             if (!string.IsNullOrWhiteSpace(rangeValue))
             {
-                if (!decimal.TryParse(rangeValue, System.Globalization.NumberStyles.Any,
-                        System.Globalization.CultureInfo.InvariantCulture, out var rv))
+                if (!decimal.TryParse(rangeValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var rv))
+                {
                     return JsonSerializer.Serialize(new
                     {
                         error = $"Invalid rangeValue '{rangeValue}'. Must be a numeric value, e.g. '85000' or '85000.50'.",
                         type = nameof(FormatException)
                     });
+                }
                 parsedRangeValue = rv;
             }
 
@@ -177,37 +214,54 @@ public sealed class PayrollQueryTools(PayrollHttpClient httpClient, IsolationCon
             var payrollContext = await ResolvePayrollContextAsync(tenantIdentifier, payrollName);
 
             if (!Enum.TryParse<CaseType>(caseType, ignoreCase: true, out var parsedCaseType))
+            {
                 return JsonSerializer.Serialize(new
                 {
                     error = $"Unknown caseType '{caseType}'. Valid values: Employee, Company, Global.",
                     type = nameof(ArgumentException)
                 });
+            }
 
+            // value date
             DateTime? parsedValueDate = null;
             if (!string.IsNullOrWhiteSpace(valueDate))
             {
-                if (!DateTime.TryParse(valueDate, out var vd))
+                if (!DateTime.TryParse(valueDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var vd))
+                {
                     return JsonSerializer.Serialize(new { error = $"Invalid valueDate '{valueDate}'. Use ISO 8601 format, e.g. '2026-01-01'.", type = nameof(FormatException) });
+                }
                 parsedValueDate = vd;
             }
 
+            // evaluation date
             DateTime? parsedEvaluationDate = null;
             if (!string.IsNullOrWhiteSpace(evaluationDate))
             {
-                if (!DateTime.TryParse(evaluationDate, out var ed))
+                if (!DateTime.TryParse(evaluationDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var ed))
+                {
                     return JsonSerializer.Serialize(new { error = $"Invalid evaluationDate '{evaluationDate}'. Use ISO 8601 format, e.g. '2026-01-01'.", type = nameof(FormatException) });
+                }
                 parsedEvaluationDate = ed;
             }
 
             IEnumerable<string> fieldNames = null;
             if (!string.IsNullOrWhiteSpace(caseFieldNames))
+            {
                 fieldNames = caseFieldNames.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            }
+
+            // In Employee isolation, always scope to the configured employee — even if the AI omitted the identifier.
+            if (string.IsNullOrWhiteSpace(employeeIdentifier) && Isolation.Level == IsolationLevel.Employee)
+            {
+                employeeIdentifier = Isolation.EmployeeIdentifier;
+            }
 
             int? employeeId = null;
             Employee resolvedEmployee = null;
             if (!string.IsNullOrWhiteSpace(employeeIdentifier))
             {
                 var (_, employee) = await ResolveEmployeeAsync(tenantIdentifier, employeeIdentifier);
+                AssertEmployeeInDivision(employee);
                 employeeId = employee.Id;
                 resolvedEmployee = employee;
             }

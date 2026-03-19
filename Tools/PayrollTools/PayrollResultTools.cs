@@ -35,6 +35,12 @@ public sealed class PayrollResultTools(PayrollHttpClient httpClient, IsolationCo
         {
             var tenantContext = await ResolveTenantContextAsync(tenantIdentifier);
 
+            // In Employee isolation, always scope to the configured employee — even if the AI omitted the identifier.
+            if (string.IsNullOrWhiteSpace(employeeIdentifier) && Isolation.Level == IsolationLevel.Employee)
+            {
+                employeeIdentifier = Isolation.EmployeeIdentifier;
+            }
+
             int? employeeId = null;
             if (!string.IsNullOrWhiteSpace(employeeIdentifier))
             {
@@ -49,10 +55,14 @@ public sealed class PayrollResultTools(PayrollHttpClient httpClient, IsolationCo
                 payrollId = payrollContext.PayrollId;
             }
 
+            // In Division isolation, scope results to the configured division.
+            var divisionId = await ResolveIsolatedDivisionIdAsync(tenantIdentifier);
+
             var valueContext = new PayrollResultValueServiceContext(
                 tenantContext.TenantId,
                 payrollId: payrollId,
-                employeeId: employeeId);
+                employeeId: employeeId,
+                divisionId: divisionId);
 
             var query = new Query
             {

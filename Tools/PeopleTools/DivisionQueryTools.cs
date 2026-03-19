@@ -23,7 +23,7 @@ public sealed class DivisionQueryTools(PayrollHttpClient httpClient, IsolationCo
         try
         {
             var context = await ResolveTenantContextAsync(tenantIdentifier);
-            var divisions = await DivisionService().QueryAsync<Division>(context, IsolatedDivisionQuery());
+            var divisions = await DivisionService().QueryAsync<Division>(context, await IsolatedDivisionQueryAsync(tenantIdentifier));
             return JsonSerializer.Serialize(divisions);
         }
         catch (Exception ex) { return Error(ex); }
@@ -37,6 +37,15 @@ public sealed class DivisionQueryTools(PayrollHttpClient httpClient, IsolationCo
     {
         try
         {
+            // Employee isolation: guard — only own divisions are accessible
+            if (Isolation.Level == IsolationLevel.Employee)
+            {
+                var (_, emp) = await ResolveEmployeeAsync(tenantIdentifier, Isolation.EmployeeIdentifier);
+                if (emp.Divisions == null || !emp.Divisions.Exists(d => string.Equals(d, divisionName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    throw new InvalidOperationException($"Access denied: division '{divisionName}' is not in the scope of employee '{Isolation.EmployeeIdentifier}'.");
+                }
+            }
             var (_, division) = await ResolveDivisionAsync(tenantIdentifier, divisionName);
             return JsonSerializer.Serialize(division);
         }
@@ -52,6 +61,15 @@ public sealed class DivisionQueryTools(PayrollHttpClient httpClient, IsolationCo
     {
         try
         {
+            // Employee isolation: guard — only own divisions are accessible
+            if (Isolation.Level == IsolationLevel.Employee)
+            {
+                var (_, emp) = await ResolveEmployeeAsync(tenantIdentifier, Isolation.EmployeeIdentifier);
+                if (emp.Divisions == null || !emp.Divisions.Exists(d => string.Equals(d, divisionName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    throw new InvalidOperationException($"Access denied: division '{divisionName}' is not in the scope of employee '{Isolation.EmployeeIdentifier}'.");
+                }
+            }
             var (context, division) = await ResolveDivisionAsync(tenantIdentifier, divisionName);
             return await DivisionService().GetAttributeAsync(context, division.Id, attributeName);
         }

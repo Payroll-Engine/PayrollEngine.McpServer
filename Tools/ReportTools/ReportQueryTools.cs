@@ -33,19 +33,25 @@ public sealed class ReportQueryTools(PayrollHttpClient httpClient, IsolationCont
         try
         {
             if (string.IsNullOrWhiteSpace(Isolation.PreviewUserIdentifier))
+            {
                 return JsonSerializer.Serialize(new
                 {
                     error = "McpServer:PreviewUserIdentifier is not configured. " +
                             "Set a service account user identifier in appsettings.json to use this tool.",
                     type = nameof(InvalidOperationException)
                 });
+            }
 
             // resolve payroll → report (GetDerivedReports across all layers)
             var payrollContext = await ResolvePayrollContextAsync(tenantIdentifier, payrollName);
             var (regulationContext, report) = await ResolveReportAsync(payrollContext, reportName);
 
+            // resolve UserIdentifier → UserId (backend only accepts UserId)
+            var (_, user) = await ResolveUserAsync(tenantIdentifier, Isolation.PreviewUserIdentifier);
+
             var request = new ReportRequest
             {
+                UserId = user.Id,
                 UserIdentifier = Isolation.PreviewUserIdentifier,
                 Culture = culture,
                 Parameters = parameters

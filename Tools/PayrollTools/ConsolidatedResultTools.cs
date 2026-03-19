@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -31,20 +32,28 @@ public sealed class ConsolidatedResultTools(PayrollHttpClient httpClient, Isolat
     {
         try
         {
-            if (!DateTime.TryParse(periodStart, out var parsedStart))
+            if (!DateTime.TryParse(periodStart, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedStart))
+            {
                 return JsonSerializer.Serialize(new { error = $"Invalid periodStart '{periodStart}'. Use ISO 8601 format, e.g. '2026-03-01'.", type = nameof(FormatException) });
+            }
 
-            if (!DateTime.TryParse(periodEnd, out var parsedEnd))
+            if (!DateTime.TryParse(periodEnd, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedEnd))
+            {
                 return JsonSerializer.Serialize(new { error = $"Invalid periodEnd '{periodEnd}'. Use ISO 8601 format, e.g. '2026-03-31'.", type = nameof(FormatException) });
+            }
 
             var (tenantContext, employee) = await ResolveEmployeeAsync(tenantIdentifier, employeeIdentifier);
+            AssertEmployeeInDivision(employee);
+
+            // In Division isolation, scope results to the configured division.
+            var divisionId = await ResolveIsolatedDivisionIdAsync(tenantIdentifier);
 
             var consolidated = await PayrollConsolidatedResultService().QueryPayrollResultAsync<ConsolidatedPayrollResult>(
                 context: tenantContext,
                 employeeId: employee.Id,
                 periodStart: parsedStart,
                 periodEnd: parsedEnd,
-                divisionId: null,
+                divisionId: divisionId,
                 forecast: string.IsNullOrWhiteSpace(forecast) ? null : forecast,
                 jobStatus: null,
                 tags: null);

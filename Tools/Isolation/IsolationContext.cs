@@ -43,21 +43,29 @@ public sealed class IsolationContext
         if (Level == IsolationLevel.Division)
         {
             if (string.IsNullOrWhiteSpace(TenantIdentifier))
+            {
                 throw new InvalidOperationException(
                     "McpServer:TenantIdentifier is required when IsolationLevel is Division.");
+            }
             if (string.IsNullOrWhiteSpace(DivisionName))
+            {
                 throw new InvalidOperationException(
                     "McpServer:DivisionName is required when IsolationLevel is Division.");
+            }
         }
 
         if (Level == IsolationLevel.Employee)
         {
             if (string.IsNullOrWhiteSpace(TenantIdentifier))
+            {
                 throw new InvalidOperationException(
                     "McpServer:TenantIdentifier is required when IsolationLevel is Employee.");
+            }
             if (string.IsNullOrWhiteSpace(EmployeeIdentifier))
+            {
                 throw new InvalidOperationException(
                     "McpServer:EmployeeIdentifier is required when IsolationLevel is Employee.");
+            }
         }
     }
 }

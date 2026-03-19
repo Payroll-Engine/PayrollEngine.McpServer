@@ -41,6 +41,14 @@ Controls **which tools** are registered at startup. Each tool belongs to exactly
 | `Report` | Payroll report execution and result analysis |
 | `System` | Tenant and user management |
 
+### Server — Always Available
+
+The server tool is registered unconditionally — regardless of role permissions or isolation level.
+
+| Tool | Description |
+|:-----|:------------|
+| `get_server_info` | Returns server version, active isolation level, configured scope, and role permissions. Use to verify which build is running and how it is configured. |
+
 ### HR — Human Resources
 
 Employee master data and organisational structure: who is employed, in which division, under what conditions, and how that data has changed over time. Includes the full case value history and the audit trail of all data mutations.
@@ -157,6 +165,83 @@ Each role is independently enabled or disabled per deployment.
 | **Payroll** | ✓ | ✓ | ✓ | ✗ |
 | **Report** | ✓ | ✓ | ✗ | ✗ |
 | **System** | ✓ | ✓ | ✗ | ✗ |
+
+### Tool × Role
+
+Each tool belongs to exactly one role. Granting a role registers all its tools.  
+`*` = always registered, independent of role permissions.
+
+| Tool | HR | Payroll | Report | System |
+|:-----|:--:|:-------:|:------:|:------:|
+| `get_server_info` | * | * | * | * |
+| `list_divisions` | ✓ | | | |
+| `get_division` | ✓ | | | |
+| `get_division_attribute` | ✓ | | | |
+| `list_employees` | ✓ | | | |
+| `get_employee` | ✓ | | | |
+| `get_employee_attribute` | ✓ | | | |
+| `list_employee_case_values` | ✓ | | | |
+| `list_company_case_values` | ✓ | | | |
+| `list_employee_case_changes` | ✓ | | | |
+| `list_company_case_changes` | ✓ | | | |
+| `list_payrolls` | | ✓ | | |
+| `get_payroll` | | ✓ | | |
+| `list_payruns` | | ✓ | | |
+| `list_payrun_jobs` | | ✓ | | |
+| `list_payroll_wage_types` | | ✓ | | |
+| `get_payroll_lookup_value` | | ✓ | | |
+| `list_payroll_result_values` | | ✓ | | |
+| `get_consolidated_payroll_result` | | ✓ | | |
+| `get_employee_pay_preview` | | ✓ | | |
+| `get_case_time_values` | | ✓ | | |
+| `execute_payroll_report` | | | ✓ | |
+| `list_tenants` | | | | ✓ |
+| `get_tenant` | | | | ✓ |
+| `get_tenant_attribute` | | | | ✓ |
+| `list_users` | | | | ✓ |
+| `get_user` | | | | ✓ |
+| `get_user_attribute` | | | | ✓ |
+
+### Tool × Isolation Level
+
+`✓` = available  
+`F` = available, records automatically filtered to configured scope  
+`G` = available, access denied if employee is not in configured scope  
+`✗` = not registered at this isolation level
+
+| Tool | MultiTenant | Tenant | Division | Employee |
+|:-----|:-----------:|:------:|:--------:|:--------:|
+| `get_server_info` | ✓ | ✓ | ✓ | ✓ |
+| `list_divisions` | ✓ | ✓ | F | F |
+| `get_division` | ✓ | ✓ | ✓ | G |
+| `get_division_attribute` | ✓ | ✓ | ✓ | G |
+| `list_employees` | ✓ | ✓ | F ¹ | F ¹ |
+| `get_employee` | ✓ | ✓ | G | G |
+| `get_employee_attribute` | ✓ | ✓ | G | G |
+| `list_employee_case_values` | ✓ | ✓ | G | G |
+| `list_company_case_values` | ✓ | ✓ | ✓ | ✓ |
+| `list_employee_case_changes` | ✓ | ✓ | G | G |
+| `list_company_case_changes` | ✓ | ✓ | ✓ | ✓ |
+| `list_payrolls` | ✓ | ✓ | F | ✗ |
+| `get_payroll` | ✓ | ✓ | G | ✗ |
+| `list_payruns` | ✓ | ✓ | F | ✗ |
+| `list_payrun_jobs` | ✓ | ✓ | F | ✗ |
+| `list_payroll_wage_types` | ✓ | ✓ | G | ✗ |
+| `get_payroll_lookup_value` | ✓ | ✓ | G | ✗ |
+| `list_payroll_result_values` | ✓ | ✓ | F | ✗ |
+| `get_consolidated_payroll_result` | ✓ | ✓ | G | ✗ |
+| `get_employee_pay_preview` | ✓ | ✓ | ✓ | ✗ |
+| `get_case_time_values` | ✓ | ✓ | G ² | ✗ |
+| `execute_payroll_report` | ✓ | ✓ | ✗ | ✗ |
+| `list_tenants` | ✓ | ✓ | ✗ | ✗ |
+| `get_tenant` | ✓ | ✓ | ✗ | ✗ |
+| `get_tenant_attribute` | ✓ | ✓ | ✗ | ✗ |
+| `list_users` | ✓ | ✓ | ✗ | ✗ |
+| `get_user` | ✓ | ✓ | ✗ | ✗ |
+| `get_user_attribute` | ✓ | ✓ | ✗ | ✗ |
+
+¹ Division filtering applied client-side — the backend does not support OData collection lambda expressions (`divisions/any()`). All employees are fetched and then filtered in memory by division membership.  
+² Guard applies only when `employeeIdentifier` is provided. Without it, `Company` and `Global` case types return all values unfiltered; `Employee` case type returns values for all employees without division scoping.
 
 ### Persona Examples
 
@@ -283,7 +368,8 @@ Add to `%APPDATA%\Claude\claude_desktop_config.json`:
         "run",
         "--project",
         "path/to/McpServer/PayrollEngine.McpServer.csproj",
-        "--no-launch-profile"
+        "--no-launch-profile",
+        "--no-build"
       ],
       "env": {
         "DOTNET_ENVIRONMENT": "Development",
