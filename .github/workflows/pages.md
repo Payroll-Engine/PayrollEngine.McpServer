@@ -16,7 +16,7 @@ Builds the MCP Server API reference with [DocFX](https://dotnet.github.io/docfx/
 | Checkout | Checks out the repository |
 | Setup .NET | Installs .NET 10 SDK |
 | Configure GitHub Packages | Adds the Payroll-Engine NuGet feed using `PAT_DISPATCH` |
-| Publish tools assembly | `dotnet publish Tools/PayrollEngine.McpServer.Tools.csproj -c Release -o publish` |
+| Publish tools assembly | `dotnet publish Tools/PayrollEngine.Mcp.Tools.csproj -c Release -o publish` |
 | Install DocFX | Installs the latest DocFX global tool |
 | Build DocFX | Runs `docfx docfx/docfx.pages.json` — generates HTML into `docfx/_site/` |
 | Upload Pages artifact | Uploads `docfx/_site/` as the GitHub Pages artifact |
@@ -24,7 +24,7 @@ Builds the MCP Server API reference with [DocFX](https://dotnet.github.io/docfx/
 
 ## Output
 
-👉 https://payroll-engine.github.io/PayrollEngine.McpServer/
+👉 https://payroll-engine.github.io/PayrollEngine.Mcp.Server/
 
 ## Permissions
 
