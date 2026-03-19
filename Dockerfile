@@ -7,6 +7,7 @@ WORKDIR /src
 COPY ["PayrollEngine.McpServer.sln", "./"]
 COPY ["McpServer/PayrollEngine.McpServer.csproj", "McpServer/"]
 COPY ["Tools/PayrollEngine.McpServer.Tools.csproj", "Tools/"]
+COPY ["Tests/PayrollEngine.McpServer.Tests.csproj", "Tests/"]
 COPY ["Directory.Build.props", "./"]
 
 # Configure GitHub Packages NuGet source

@@ -58,7 +58,7 @@ jobs:
       # ── Version Guard ────────────────────────────────
       - name: Check if version already exists
         if: steps.params.outputs.dry_run != 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.PAT_DISPATCH }}
           script: |
